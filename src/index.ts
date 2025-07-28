@@ -1,12 +1,14 @@
-import express, { Application, Request, Response } from "express";
-import userRouter from "./features/auth/routes/user_routes";
 import dotenv from "dotenv";
-
 dotenv.config();
+import express, { Application, Request, Response } from "express";
+import indexRouter from "./core/configs/index.router";
+
 const app: Application = express();
 const port = process.env.PORT || 3000;
 
-app.use("/api/users", userRouter);
+// * App router
+app.use(indexRouter);
+
 
 app.get("/", (req: Request, res: Response) => {
   res.send("H O M E P A G E");
