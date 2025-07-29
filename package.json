@@ -13,16 +13,30 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/express-validator": "^2.20.33",
+    "@types/passport": "^1.0.17",
+    "@types/passport-google-oauth20": "^2.0.16",
+    "@types/bcrypt": "^6.0.0",
     "@types/body-parser": "^1.19.6",
+    "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.3",
+    "@types/express-session": "^1.18.2",
+    "@types/mongoose": "^5.11.96",
     "@types/node": "^24.0.3",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^16.5.0",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "express-validator": "^7.2.1",
+    "mongoose": "^8.16.5",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0"
   }
 }
