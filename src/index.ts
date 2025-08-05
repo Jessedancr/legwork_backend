@@ -2,13 +2,16 @@ import dotenv from "dotenv";
 dotenv.config();
 import express, { Application, Request, Response } from "express";
 import indexRouter from "./core/configs/index.router";
-import connectMongo from "./core/configs/db/connectMongo";
+import connectMongo from "./core/configs/connectMongo";
 
 const app: Application = express();
 const port = process.env.PORT || 3000;
 
 // * Connect to mongoDB
 connectMongo();
+
+// * Parse bodies
+app.use(express.json());
 
 // * App router
 app.use(indexRouter);
