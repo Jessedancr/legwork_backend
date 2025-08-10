@@ -4,34 +4,29 @@ import {
   DancerInterface,
   UserInterface,
 } from "../models/user.interface";
-import { clientModel, dancerModel } from "../models/user.schema";
 import { matchedData, validationResult } from "express-validator";
 import {
+  checkUserExists,
+  generateToken,
   hashPassword,
+  maxAge,
   saveClient,
   saveDancer,
-} from "../../../core/configs/helpers";
+} from "../../../core/configs/utils";
+
+type confirmPassword = {
+  password2: string;
+};
 
 type SignupReqBody = UserInterface &
   Partial<DancerInterface> &
-  Partial<ClientInterface>;
+  Partial<ClientInterface> &
+  confirmPassword;
 
 export async function signup(
   req: Request<{}, {}, SignupReqBody>,
   res: Response
 ) {
-  // * Destructure request body
-  const {
-    firstName,
-    lastName,
-    username,
-    email,
-    phoneNumber,
-    password,
-    userType,
-    organisationName,
-  } = req.body;
-
   // * Extracts the validation errors if any
   const result = validationResult(req);
   console.log("POST auth/signup: Validation result: ", result);
@@ -43,25 +38,75 @@ export async function signup(
   // * Validated data
   const data = matchedData<SignupReqBody>(req);
 
+  let {
+    firstName,
+    lastName,
+    username,
+    email,
+    phoneNumber,
+    userType,
+    password,
+    password2,
+    organisationName,
+  } = data;
+
+  // * If passwords dont match
+  if (password != password2) {
+    console.log("Passwords do not match!");
+    return res.status(400).send("Passwords do not match!");
+  }
+
   // * Hash the password
-  data.password = await hashPassword(data.password);
+  password = await hashPassword(password);
 
   try {
+    // * Check if the user already exists
+    const { exists, field } = await checkUserExists(
+      username,
+      email,
+      phoneNumber
+    );
+
+    // If user already exists
+    if (exists) {
+      console.log(`User already exists with the provided ${field}`);
+      return res
+        .status(400)
+        .send(`User already exists with the provided ${field}`);
+    }
+
     // * If the user is a dancer
     if (userType == "dancer") {
       const savedDancer = await saveDancer(data);
-      res.status(201).send(savedDancer);
+      // Create JWT for dancer
+      const token = await generateToken(savedDancer.id);
+      res.cookie("jwt", token, { httpOnly: true, maxAge: maxAge * 1000 });
+      console.log("Token generated for dancer: ", token);
+      res.status(201).json({
+        message: "dancer registered successfully",
+        dancer: savedDancer.id,
+        token,
+      });
     }
+
     // * If the user is a client
     else if (userType == "client") {
       const savedClient = await saveClient(data);
-      res.status(201).send(savedClient);
+      // Create JWT for client
+      const token = await generateToken(savedClient.id);
+      res.cookie("jwt", token, { httpOnly: true, maxAge: maxAge * 1000 });
+      console.log("Token generated for client: ", token);
+      res.status(201).json({
+        message: "Client registered successfully",
+        client: savedClient.id,
+        token,
+      });
     } else {
       res.status(400).send("Invalid user type. Must be a dancer or client");
     }
   } catch (error) {
     console.log("An unknown error occured: ", error);
-    res.status(500).send("Internal server error");
+    res.status(500).json({ message: "internal server error", error });
   }
 }
 

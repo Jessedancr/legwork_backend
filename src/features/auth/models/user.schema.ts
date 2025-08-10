@@ -18,23 +18,31 @@ const baseUserFields = {
   profilePicture: { type: String, default: "" },
   deviceToken: { type: String, default: "" },
 };
-const userSchema = new Schema<UserInterface>(baseUserFields);
+const userSchema = new Schema<UserInterface>(baseUserFields, {
+  timestamps: true,
+});
 
 // * Dancer schema
-const dancerSchema = new Schema<DancerInterface>({
-  ...baseUserFields,
-  jobPrefs: { type: Schema.Types.Mixed, default: {} },
-  resume: { type: Schema.Types.Mixed, default: {} },
-});
+const dancerSchema = new Schema<DancerInterface>(
+  {
+    ...baseUserFields,
+    jobPrefs: { type: Schema.Types.Mixed, default: {} },
+    resume: { type: Schema.Types.Mixed, default: {} },
+  },
+  { timestamps: true }
+);
 
 // * Client schema
-const clientSchema = new Schema<ClientInterface>({
-  ...baseUserFields,
-  danceStylePrefs: { type: [Schema.Types.String], default: [] },
-  jobOfferings: { type: [Schema.Types.Mixed], default: [] },
-  organisationName: { type: String, default: "" },
-  hiringHistory: { type: Schema.Types.Map },
-});
+const clientSchema = new Schema<ClientInterface>(
+  {
+    ...baseUserFields,
+    danceStylePrefs: { type: [Schema.Types.String], default: [] },
+    jobOfferings: { type: [Schema.Types.Mixed], default: [] },
+    organisationName: { type: String, default: "" },
+    hiringHistory: { type: Schema.Types.Map },
+  },
+  { timestamps: true }
+);
 
 // * Base user model
 export const userModel = mongoose.model<UserInterface>("user", userSchema);
