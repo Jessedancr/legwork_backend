@@ -4,8 +4,10 @@ import jwt from "jsonwebtoken";
 import {
   clientModel,
   dancerModel,
+  userModel,
 } from "../../features/auth/models/user.schema";
 import { UserInterface } from "../../features/auth/models/user.interface";
+import UserType from "../enums/userTypeEnum";
 
 /**
  * * HASH PASSWORD
@@ -106,4 +108,34 @@ export const generateToken = async (id: string) => {
   return jwt.sign({ id }, process.env.JWT_SECRET as string, {
     expiresIn: maxAge,
   });
+};
+
+/**
+ * * FIND USER
+ */
+export const findUserByUsernameOrEmail = async (identifier: string) => {
+  try {
+    // * Find user by username or email
+    const [dancer, client] = await Promise.all([
+      dancerModel.findOne({
+        $or: [{ username: identifier }, { email: identifier }],
+      }),
+      clientModel.findOne({
+        $or: [{ username: identifier }, { email: identifier }],
+      }),
+    ]);
+    if (dancer) {
+      console.log("Dancer found: ", dancer);
+      return dancer;
+    } else if (client) {
+      console.log("Client found: ", client);
+      return client;
+    } else {
+      console.log("user not found");
+      return null;
+    }
+  } catch (error) {
+    console.log("Error finding user: ", error);
+    return null;
+  }
 };

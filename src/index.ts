@@ -20,7 +20,7 @@ app.use(passport.initialize()); // Initialize passport
 passport.use(passprtJWTStrat());
 
 // * App router
-app.use("/api", indexRouter);
+app.use(indexRouter);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("H O M E P A G E");

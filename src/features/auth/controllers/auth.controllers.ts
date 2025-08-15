@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
+import { matchedData, validationResult } from "express-validator";
 import {
   ClientInterface,
   DancerInterface,
   UserInterface,
 } from "../models/user.interface";
-import { matchedData, validationResult } from "express-validator";
 import {
   checkUserExists,
   generateToken,
@@ -12,6 +12,8 @@ import {
   maxAge,
   saveClient,
   saveDancer,
+  findUserByUsernameOrEmail,
+  comparePasswords,
 } from "../../../core/configs/utils";
 
 type confirmPassword = {
@@ -22,6 +24,11 @@ type SignupReqBody = UserInterface &
   Partial<DancerInterface> &
   Partial<ClientInterface> &
   confirmPassword;
+
+type loginReqBody = {
+  usernameOrEmail: string;
+  password: string;
+};
 
 export async function signup(
   req: Request<{}, {}, SignupReqBody>,
@@ -38,17 +45,7 @@ export async function signup(
   // * Validated data
   const data = matchedData<SignupReqBody>(req);
 
-  let {
-    firstName,
-    lastName,
-    username,
-    email,
-    phoneNumber,
-    userType,
-    password,
-    password2,
-    organisationName,
-  } = data;
+  let { username, email, phoneNumber, userType, password, password2 } = data;
 
   // * If passwords dont match
   if (password != password2) {
@@ -57,7 +54,8 @@ export async function signup(
   }
 
   // * Hash the password
-  password = await hashPassword(password);
+  const hashedPassword = await hashPassword(password);
+  data.password = hashedPassword;
 
   try {
     // * Check if the user already exists
@@ -110,6 +108,51 @@ export async function signup(
   }
 }
 
-export function login(req: Request, res: Response) {}
+export async function login(req: Request<{}, {}, loginReqBody>, res: Response) {
+  const result = validationResult(req);
+  console.log("POST auth/login: Validation result: ", result);
 
-export function logout(req: Request, res: Response) {}
+  // * If there are errors while validating the user's input
+  if (!result.isEmpty())
+    return res.status(400).send({ errors: result.array() });
+
+  // * Validated data
+  const data = matchedData<loginReqBody>(req);
+  const { usernameOrEmail, password } = data;
+
+  try {
+    // * Find user by username or email
+    const user = await findUserByUsernameOrEmail(usernameOrEmail);
+    if (!user) {
+      console.log("User not found");
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // * Check if password is correct
+    const isPasswordValid = await comparePasswords(password, user.password);
+    if (!isPasswordValid) {
+      console.log("Invalid password");
+      return res.status(401).json({ message: "Invalid Password" });
+    }
+
+    // * Generate token
+    const token = await generateToken(user.id);
+
+    // * Set cookie with token
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      maxAge: maxAge * 1000,
+      // secure: true,
+    });
+
+    res.status(200).json({ message: "Login successful", user: user.id, token });
+  } catch (error) {
+    console.log("Internal server error: ", error);
+    return res.status(500).json({ message: "internal server error", error });
+  }
+}
+
+export function logout(req: Request, res: Response) {
+  res.clearCookie("jwt", { httpOnly: true });
+  res.status(200).json({ Message: "logout successful" });
+}
