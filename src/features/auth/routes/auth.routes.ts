@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { login, logout, signup } from "../controllers/auth.controllers";
-import { body, checkSchema } from "express-validator";
+import { checkSchema } from "express-validator";
 import { userSignUpValidationSchema } from "../../../core/middlewares/userSignUpValidationSchema";
 import { userLoginValidationSchema } from "../../../core/middlewares/userLoginValidationSchema";
 

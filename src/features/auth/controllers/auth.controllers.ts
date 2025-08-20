@@ -40,7 +40,7 @@ export async function signup(
 
   // * If there are errors while validating the user's input
   if (!result.isEmpty())
-    return res.status(400).send({ errors: result.array() });
+    return res.status(400).json({ errors: result.array() });
 
   // * Validated data
   const data = matchedData<SignupReqBody>(req);
@@ -70,33 +70,42 @@ export async function signup(
       console.log(`User already exists with the provided ${field}`);
       return res
         .status(400)
-        .send(`User already exists with the provided ${field}`);
+        .json({ message: `User already exists with the provided ${field}` });
     }
 
     // * If the user is a dancer
     if (userType == "dancer") {
-      const savedDancer = await saveDancer(data);
+      const savedDancer = await saveDancer({
+        ...data,
+        jobPrefs: {},
+        resume: {},
+      });
       // Create JWT for dancer
       const token = await generateToken(savedDancer.id);
       res.cookie("jwt", token, { httpOnly: true, maxAge: maxAge * 1000 });
       console.log("Token generated for dancer: ", token);
       res.status(201).json({
         message: "dancer registered successfully",
-        dancer: savedDancer.id,
+        dancer: savedDancer,
         token,
       });
     }
 
     // * If the user is a client
     else if (userType == "client") {
-      const savedClient = await saveClient(data);
+      const savedClient = await saveClient({
+        ...data,
+        danceStylePrefs: [],
+        jobOfferings: [],
+        hiringHistory: {},
+      });
       // Create JWT for client
       const token = await generateToken(savedClient.id);
       res.cookie("jwt", token, { httpOnly: true, maxAge: maxAge * 1000 });
       console.log("Token generated for client: ", token);
       res.status(201).json({
         message: "Client registered successfully",
-        client: savedClient.id,
+        client: savedClient,
         token,
       });
     } else {
@@ -154,5 +163,6 @@ export async function login(req: Request<{}, {}, loginReqBody>, res: Response) {
 
 export function logout(req: Request, res: Response) {
   res.clearCookie("jwt", { httpOnly: true });
+  console.log("Logout successful, cookie cleared");
   res.status(200).json({ Message: "logout successful" });
 }

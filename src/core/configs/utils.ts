@@ -1,13 +1,13 @@
 import bcrypt from "bcrypt";
-import { Document } from "mongoose";
 import jwt from "jsonwebtoken";
 import {
   clientModel,
   dancerModel,
-  userModel,
 } from "../../features/auth/models/user.schema";
-import { UserInterface } from "../../features/auth/models/user.interface";
-import UserType from "../enums/userTypeEnum";
+import {
+  ClientInterface,
+  DancerInterface,
+} from "../../features/auth/models/user.interface";
 
 /**
  * * HASH PASSWORD
@@ -71,7 +71,7 @@ export const checkUserExists = async (
 /**
  * * SAVE DANCER TO DB
  */
-export const saveDancer = async (dancerData: UserInterface) => {
+export const saveDancer = async (dancerData: DancerInterface) => {
   const dancer = new dancerModel(dancerData);
   try {
     // * Save to db
@@ -87,7 +87,7 @@ export const saveDancer = async (dancerData: UserInterface) => {
 /**
  * * SAVE CLIENT TO DB
  */
-export const saveClient = async (clientData: Document) => {
+export const saveClient = async (clientData: ClientInterface) => {
   const client = new clientModel(clientData);
   try {
     // * Save to db
@@ -103,7 +103,7 @@ export const saveClient = async (clientData: Document) => {
 /**
  * * GENERATE JWT TOKEN
  */
-export const maxAge = 60 * 2; // 2 mins
+export const maxAge = 60 * 30; // 30 mins
 export const generateToken = async (id: string) => {
   return jwt.sign({ id }, process.env.JWT_SECRET as string, {
     expiresIn: maxAge,
@@ -125,10 +125,10 @@ export const findUserByUsernameOrEmail = async (identifier: string) => {
       }),
     ]);
     if (dancer) {
-      console.log("Dancer found: ", dancer);
+      console.log("Dancer found");
       return dancer;
     } else if (client) {
-      console.log("Client found: ", client);
+      console.log("Client found");
       return client;
     } else {
       console.log("user not found");
@@ -137,5 +137,35 @@ export const findUserByUsernameOrEmail = async (identifier: string) => {
   } catch (error) {
     console.log("Error finding user: ", error);
     return null;
+  }
+};
+
+// * FIND USER BY ID
+export const findUserAndUpdate = async (
+  id: string,
+  updateData: Record<string, any>
+) => {
+  try {
+    const [updatedDancer, updatedClient] = await Promise.all([
+      dancerModel.findByIdAndUpdate(id, updateData, {
+        new: true,
+        runValidators: true,
+      }),
+      clientModel.findByIdAndUpdate(id, updateData, {
+        new: true,
+        runValidators: true,
+      }),
+    ]);
+
+    if (updatedDancer) {
+      return updatedDancer;
+    } else if (updatedClient) {
+      return updatedClient;
+    } else {
+      console.log("User not found in either collection");
+      return null;
+    }
+  } catch (error) {
+    console.log("Error finding  and updating user: ", error);
   }
 };

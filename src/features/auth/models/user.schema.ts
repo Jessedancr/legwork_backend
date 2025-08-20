@@ -26,8 +26,8 @@ const userSchema = new Schema<UserInterface>(baseUserFields, {
 const dancerSchema = new Schema<DancerInterface>(
   {
     ...baseUserFields,
-    jobPrefs: { type: Schema.Types.Mixed, default: {} },
-    resume: { type: Schema.Types.Mixed, default: {} },
+    jobPrefs: { type: Schema.Types.Map, default: {} },
+    resume: { type: Schema.Types.Map, default: {} },
   },
   { timestamps: true }
 );
@@ -36,10 +36,10 @@ const dancerSchema = new Schema<DancerInterface>(
 const clientSchema = new Schema<ClientInterface>(
   {
     ...baseUserFields,
-    danceStylePrefs: { type: [Schema.Types.String], default: [] },
-    jobOfferings: { type: [Schema.Types.Mixed], default: [] },
+    danceStylePrefs: { type: [Schema.Types.Array], default: [] },
+    jobOfferings: { type: [Schema.Types.Array], default: [] },
     organisationName: { type: String, default: "" },
-    hiringHistory: { type: Schema.Types.Map },
+    hiringHistory: { type: Schema.Types.Map, default: {} },
   },
   { timestamps: true }
 );

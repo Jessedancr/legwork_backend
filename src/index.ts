@@ -5,10 +5,18 @@ import cookieParser from "cookie-parser";
 import passport from "passport";
 import indexRouter from "./core/configs/index.router";
 import connectMongo from "./core/configs/connectMongo";
-import { passprtJWTStrat } from "./core/middlewares/passportStrats/authjwt.middlewar";
+import { passprtJWTStrat } from "./core/middlewares/passportStrats/authjwt.middleware";
+import cors from "cors";
 
 const app: Application = express();
 const port = process.env.PORT || 3000;
+// Enable CORS
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+  })
+);
 
 // * Connect to mongoDB
 connectMongo();
