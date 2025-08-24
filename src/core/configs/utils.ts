@@ -9,9 +9,7 @@ import {
   DancerInterface,
 } from "../../features/auth/models/user.interface";
 
-/**
- * * HASH PASSWORD
- */
+// * HASH PASSWORD
 export const hashPassword = async (password: string) => {
   const saltRounds = 10;
   // * Generate salt
@@ -22,9 +20,7 @@ export const hashPassword = async (password: string) => {
   return hash;
 };
 
-/**
- * * COMPARE PASSWORDS
- */
+// * COMPARE PASSWORD
 export const comparePasswords = async (plain: string, hashed: string) =>
   await bcrypt.compare(plain, hashed);
 
@@ -68,9 +64,7 @@ export const checkUserExists = async (
   return { exists: false };
 };
 
-/**
- * * SAVE DANCER TO DB
- */
+// * SAVE DANCER TO DB
 export const saveDancer = async (dancerData: DancerInterface) => {
   const dancer = new dancerModel(dancerData);
   try {
@@ -84,9 +78,7 @@ export const saveDancer = async (dancerData: DancerInterface) => {
   }
 };
 
-/**
- * * SAVE CLIENT TO DB
- */
+// * SAVE CLIENT TO DB
 export const saveClient = async (clientData: ClientInterface) => {
   const client = new clientModel(clientData);
   try {
@@ -100,18 +92,31 @@ export const saveClient = async (clientData: ClientInterface) => {
   }
 };
 
-/**
- * * GENERATE JWT TOKEN
- */
-export const maxAge = 60 * 30; // 30 mins
-export const generateToken = async (id: string) => {
+// * GENERATE JWT TOKENS
+export const accessTokenMaxAge = 60 * 60 * 24; // 1 day
+export const refreshTokenMaxAge = 60 * 60 * 24 * 7; // 1 weel
+export const generateAccessToken = async (id: string) => {
   return jwt.sign({ id }, process.env.JWT_SECRET as string, {
-    expiresIn: maxAge,
+    expiresIn: accessTokenMaxAge,
   });
+};
+export const generateRefreshToken = async (id: string) => {
+  return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET as string, {
+    expiresIn: refreshTokenMaxAge,
+  });
+};
+
+// * VERIFY JWT TOKENS
+export const verifyAccessToken = async (token: string) => {
+  return jwt.verify(token, process.env.JWT_SECRET as string);
+};
+export const verifyRefreshToken = async (token: string) => {
+  return jwt.verify(token, process.env.JWT_REFRESH_SECRET as string);
 };
 
 /**
  * * FIND USER
+ * * This function is used during login
  */
 export const findUserByUsernameOrEmail = async (identifier: string) => {
   try {
@@ -141,6 +146,30 @@ export const findUserByUsernameOrEmail = async (identifier: string) => {
 };
 
 // * FIND USER BY ID
+export const findUserById = async (id: string) => {
+  try {
+    const [dancer, client] = await Promise.all([
+      dancerModel.findById(id),
+      clientModel.findById(id),
+    ]);
+
+    if (dancer) {
+      console.log("Dancer found by ID");
+      return dancer;
+    } else if (client) {
+      console.log("Client found by ID");
+      return client;
+    } else {
+      console.log("User not found in either collection");
+      return null;
+    }
+  } catch (error) {
+    console.log("Error finding user by ID: ", error);
+    return null;
+  }
+};
+
+// * FIND USER BY ID AND UPDATE
 export const findUserAndUpdate = async (
   id: string,
   updateData: Record<string, any>

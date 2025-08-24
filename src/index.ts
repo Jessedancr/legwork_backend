@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import passport from "passport";
 import indexRouter from "./core/configs/index.router";
 import connectMongo from "./core/configs/connectMongo";
-import { passprtJWTStrat } from "./core/middlewares/passportStrats/authjwt.middleware";
+import { passprtJWTStrat, passportRefreshStrat } from "./core/middlewares/passportStrats/authjwt.middleware";
 import cors from "cors";
 
 const app: Application = express();
@@ -25,7 +25,8 @@ connectMongo();
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize()); // Initialize passport
-passport.use(passprtJWTStrat());
+passport.use("jwt", passprtJWTStrat());
+passport.use("refresh", passportRefreshStrat());
 
 // * App router
 app.use(indexRouter);

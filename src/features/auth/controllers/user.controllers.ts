@@ -11,6 +11,7 @@ export function getUserDetails(req: Request, res: Response) {}
 export function getDeviceToken(req: Request, res: Response) {}
 
 export async function updateUserDetails(req: Request, res: Response) {
+  console.log("User in Request.user: ", req.user);
   const result = validationResult(req);
   console.log(
     "PATCH /:userId/update-user-details: Validation result: ",

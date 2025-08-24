@@ -15,6 +15,7 @@ export interface UserInterface extends Document {
   userType: "dancer" | "client";
   profilePicture?: string;
   deviceToken: string;
+  refreshToken: string | null;
 }
 
 // * Dancer interface

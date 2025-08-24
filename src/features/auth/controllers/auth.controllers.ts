@@ -7,17 +7,26 @@ import {
 } from "../models/user.interface";
 import {
   checkUserExists,
-  generateToken,
+  generateAccessToken,
   hashPassword,
-  maxAge,
+  accessTokenMaxAge,
   saveClient,
   saveDancer,
   findUserByUsernameOrEmail,
+  findUserById,
   comparePasswords,
+  generateRefreshToken,
+  findUserAndUpdate,
+  refreshTokenMaxAge,
+  verifyRefreshToken,
 } from "../../../core/configs/utils";
 
 type confirmPassword = {
   password2: string;
+};
+
+type refreshTokenReqBody = {
+  refreshToken: string;
 };
 
 type SignupReqBody = UserInterface &
@@ -65,12 +74,10 @@ export async function signup(
       phoneNumber
     );
 
-    // If user already exists
+    // * If user already exists
     if (exists) {
       console.log(`User already exists with the provided ${field}`);
-      return res
-        .status(400)
-        .json({ message: `User already exists with the provided ${field}` });
+      return res.status(400).json({ message: `User exists with ${field}` });
     }
 
     // * If the user is a dancer
@@ -80,14 +87,31 @@ export async function signup(
         jobPrefs: {},
         resume: {},
       });
-      // Create JWT for dancer
-      const token = await generateToken(savedDancer.id);
-      res.cookie("jwt", token, { httpOnly: true, maxAge: maxAge * 1000 });
-      console.log("Token generated for dancer: ", token);
+      // Create Tokens for dancer
+      const accessToken = await generateAccessToken(savedDancer.id);
+      const refreshToken = await generateRefreshToken(savedDancer.id);
+
+      // Hash refresh token and store it in db
+      const hashedRefreshToken = await hashPassword(refreshToken);
+      await findUserAndUpdate(savedDancer.id, {
+        refreshToken: hashedRefreshToken,
+      });
+
+      // Set the tokens
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        maxAge: accessTokenMaxAge * 1000,
+      });
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        maxAge: refreshTokenMaxAge * 1000,
+      });
+      console.log("Token generated for dancer: ", accessToken);
       res.status(201).json({
         message: "dancer registered successfully",
         dancer: savedDancer,
-        token,
+        accessToken,
+        refreshToken,
       });
     }
 
@@ -99,14 +123,32 @@ export async function signup(
         jobOfferings: [],
         hiringHistory: {},
       });
-      // Create JWT for client
-      const token = await generateToken(savedClient.id);
-      res.cookie("jwt", token, { httpOnly: true, maxAge: maxAge * 1000 });
-      console.log("Token generated for client: ", token);
+      // Create Tokens for client
+      const accessToken = await generateAccessToken(savedClient.id);
+      const refreshToken = await generateRefreshToken(savedClient.id);
+
+      // Hash refresh token and store it in db
+      const hashedRefreshToken = await hashPassword(refreshToken);
+      await findUserAndUpdate(savedClient.id, {
+        refreshToken: hashedRefreshToken,
+      });
+
+      // Set the tokens
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        maxAge: accessTokenMaxAge * 1000,
+      });
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        maxAge: refreshTokenMaxAge * 1000,
+      });
+
+      console.log("Token generated for client: ", accessToken);
       res.status(201).json({
         message: "Client registered successfully",
         client: savedClient,
-        token,
+        accessToken,
+        refreshToken,
       });
     } else {
       res.status(400).send("Invalid user type. Must be a dancer or client");
@@ -144,17 +186,27 @@ export async function login(req: Request<{}, {}, loginReqBody>, res: Response) {
       return res.status(401).json({ message: "Invalid Password" });
     }
 
-    // * Generate token
-    const token = await generateToken(user.id);
+    // * Generate tokens and hash refresh token
+    const accessToken = await generateAccessToken(user.id);
+    const refreshToken = await generateRefreshToken(user.id);
+    const hashedRefreshToken = await hashPassword(refreshToken);
+    await findUserAndUpdate(user.id, { refreshToken: hashedRefreshToken });
 
     // * Set cookie with token
-    res.cookie("jwt", token, {
+    res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      maxAge: maxAge * 1000,
+      maxAge: accessTokenMaxAge * 1000,
       // secure: true,
     });
 
-    res.status(200).json({ message: "Login successful", user: user.id, token });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      maxAge: refreshTokenMaxAge * 1000,
+    });
+
+    res
+      .status(200)
+      .json({ message: "Login successful", user, accessToken, refreshToken });
   } catch (error) {
     console.log("Internal server error: ", error);
     return res.status(500).json({ message: "internal server error", error });
@@ -162,7 +214,69 @@ export async function login(req: Request<{}, {}, loginReqBody>, res: Response) {
 }
 
 export function logout(req: Request, res: Response) {
-  res.clearCookie("jwt", { httpOnly: true });
-  console.log("Logout successful, cookie cleared");
-  res.status(200).json({ Message: "logout successful" });
+  res.clearCookie("accessToken", { httpOnly: true });
+  res.clearCookie("refreshToken", { httpOnly: true });
+  console.log("Logout successful, cookies cleared");
+  res.status(200).json({ message: "logout successful, cookies cleared" });
+}
+
+/**
+ * * This function refreshes both access and refresh tokens
+ */
+export async function refreshTokens(
+  req: Request<{}, {}, refreshTokenReqBody>,
+  res: Response
+) {
+  try {
+    // * Get refresh token from cookies or body
+    const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+
+    if (!refreshToken) {
+      console.log("Refresh token not provided");
+      return res.status(401).json({ message: "Refresh token not provided" });
+    }
+
+    // * Verify the refresh token
+    const payload: any = await verifyRefreshToken(refreshToken);
+    if (!payload || !payload.id) {
+      console.log("Invalid refresh token");
+      return res.status(401).json({ message: "Invalid refresh token" });
+    }
+
+    // * Find user by ID
+    const user = await findUserById(payload.id);
+    if (!user) {
+      console.log("User not found");
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // * Generate new tokens
+    const newAccessToken = await generateAccessToken(user.id);
+    const newRefreshToken = await generateRefreshToken(user.id);
+
+    // * Hash and store the new refresh token
+    const hashedRefreshToken = await hashPassword(newRefreshToken);
+    await findUserAndUpdate(user.id, { refreshToken: hashedRefreshToken });
+
+    // * Set new cookies
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      maxAge: accessTokenMaxAge * 1000,
+    });
+
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      maxAge: refreshTokenMaxAge * 1000,
+    });
+
+    console.log("Tokens refreshed successfully");
+    res.status(200).json({
+      message: "Tokens refreshed successfully",
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    });
+  } catch (error) {
+    console.log("Refresh token error: ", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 }

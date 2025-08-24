@@ -17,6 +17,7 @@ const baseUserFields = {
   userType: { type: String, required: true, enum: ["dancer", "client"] },
   profilePicture: { type: String, default: "" },
   deviceToken: { type: String, default: "" },
+  refreshToken: { type: String, default: null, select: false },
 };
 const userSchema = new Schema<UserInterface>(baseUserFields, {
   timestamps: true,
