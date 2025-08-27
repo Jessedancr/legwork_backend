@@ -10,28 +10,28 @@ const options: swaggerJSDoc.Options = {
       version: "1.0.0",
       description:
         "API documentation for Legwork, a platform for dancers and clients to connect",
-      tags: [
-        { name: "auth", description: "Authentication routes" },
-        { name: "users", description: "User management routes" },
-      ],
-      servers: [
-        {
-          url: `http://localhost:${process.env.PORT || 3000}`,
-          description: "Development server",
+    },
+    tags: [
+      { name: "auth", description: "Authentication routes" },
+      { name: "users", description: "User management routes" },
+    ],
+    servers: [
+      {
+        url: `http://localhost:${process.env.PORT || 3000}`,
+        description: "Development server",
+      },
+    ],
+    components: {
+      securitySchemes: {
+        bearer: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
         },
-      ],
-      components: {
-        securitySchemes: {
-          bearer: {
-            type: "http",
-            scheme: "bearer",
-            bearerFormat: "JWT",
-          },
-          ApiKeyAuth: {
-            type: "apiKey",
-            in: "header",
-            name: "x-api-key",
-          },
+        ApiKeyAuth: {
+          type: "apiKey",
+          in: "header",
+          name: "x-api-key",
         },
       },
     },

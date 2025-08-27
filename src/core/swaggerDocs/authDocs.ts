@@ -57,10 +57,12 @@
  *                 message:
  *                   type: string
  *                 dancer:
- *                   type: string
+ *                   type: object
  *                 client:
+ *                   type: object
+ *                 accessToken:
  *                   type: string
- *                 token:
+ *                 refreshToken:
  *                   type: string
  *       400:
  *         description: Validation error or user already exists
@@ -99,7 +101,7 @@
  *             $ref: '#/components/schemas/LoginReqBody'
  *     responses:
  *       200:
- *         description: Login successful
+ *         description: Login successful. Tokens are also set as httpOnly cookies.
  *         content:
  *           application/json:
  *             schema:
@@ -108,8 +110,10 @@
  *                 message:
  *                   type: string
  *                 user:
+ *                   type: object
+ *                 accessToken:
  *                   type: string
- *                 token:
+ *                 refreshToken:
  *                   type: string
  *       401:
  *         description: Invalid credentials
@@ -120,7 +124,7 @@
 /**
  * @swagger
  * /api/auth/logout:
- *   post:
+ *   get:
  *     tags:
  *       - auth
  *     summary: Logout user
@@ -134,4 +138,49 @@
  *               properties:
  *                 Message:
  *                   type: string
+ */
+
+// * REFRESH TOKENS
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     RefreshTokensReqBody:
+ *       type: object
+ *       properties:
+ *         refreshToken:
+ *           type: string
+ *           description: Optional if cookie is present. If provided, must be a valid refresh token.
+ */
+
+/**
+ * @swagger
+ * /api/auth/refresh-tokens:
+ *   post:
+ *     tags:
+ *       - auth
+ *     summary: Refresh access and refresh tokens
+ *     description: Uses the refresh token from cookies (preferred) or request body to issue new tokens. New tokens are also set as httpOnly cookies.
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RefreshTokensReqBody'
+ *     responses:
+ *       200:
+ *         description: Tokens refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 accessToken:
+ *                   type: string
+ *                 refreshToken:
+ *                   type: string
+ *       401:
+ *         description: Invalid or missing refresh token
  */

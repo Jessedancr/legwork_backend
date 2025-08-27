@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   getDeviceToken,
-  getUserById,
+  getUserDetails,
   getUsers,
   updateUserDetails,
 } from "../controllers/user.controllers";
@@ -12,7 +12,7 @@ const userRouter: Router = Router();
 
 userRouter.get("/get-users", getUsers);
 
-userRouter.get("/:userId", getUserById);
+userRouter.get("/:userId/get-user-details", authMiddleware, getUserDetails);
 
 userRouter.get("/:userId/get-device-token", getDeviceToken);
 

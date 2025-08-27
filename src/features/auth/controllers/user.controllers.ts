@@ -1,12 +1,27 @@
 import { Request, Response } from "express";
-import { findUserAndUpdate } from "../../../core/configs/utils";
+import { findUserAndUpdate, findUserById } from "../../../core/configs/utils";
 import { matchedData, validationResult } from "express-validator";
 
 export function getUsers(req: Request, res: Response) {}
 
-export function getUserById(req: Request, res: Response) {}
+export async function getUserDetails(req: Request, res: Response) {
+  const userId = req.params.userId;
+  console.log("User ID from req.params: ", userId);
 
-export function getUserDetails(req: Request, res: Response) {}
+  try {
+    const user = await findUserById(userId);
+
+    if (!user) {
+      console.log(`User not found with the provided ID: ${userId}`);
+      res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "User's details gotten", user });
+  } catch (error) {
+    console.error("Unknown error getting user details: ", error);
+    return res.status(500).json({ message: "unknown server error" });
+  }
+}
 
 export function getDeviceToken(req: Request, res: Response) {}
 

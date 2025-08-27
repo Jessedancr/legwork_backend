@@ -34,7 +34,7 @@ type SignupReqBody = UserInterface &
   Partial<ClientInterface> &
   confirmPassword;
 
-type loginReqBody = {
+export type loginReqBody = {
   usernameOrEmail: string;
   password: string;
 };
