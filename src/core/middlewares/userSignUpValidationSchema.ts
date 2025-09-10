@@ -1,4 +1,4 @@
-export const userValidationSchema = {
+export const userSignUpValidationSchema = {
   // * First name validation
   firstName: {
     isLength: {
@@ -65,6 +65,15 @@ export const userValidationSchema = {
     isLength: {
       options: { min: 6 },
       errorMessage: "Password must be a minimum of 6 characters",
+    },
+  },
+
+  // * Confirm Password validation
+  password2: {
+    notEmpty: { errorMessage: "Password2 cannot be empty" },
+    isLength: {
+      options: { min: 6 },
+      errorMessage: "Password2 must be a minimum of 6 characters",
     },
   },
 };
