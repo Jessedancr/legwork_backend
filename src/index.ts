@@ -15,37 +15,37 @@ import morgan from "morgan";
 const app: Application = express();
 const port = process.env.PORT || 3000;
 // Enable CORS
-// app.use(
-//   cors({
-//     origin: "*",
-//     credentials: true,
-//   })
-// );
-
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps)
-      if (!origin) return callback(null, true);
-
-      const allowedOrigins = [
-        "http://localhost:8080",
-        "http://127.0.0.1:8080",
-        "http://localhost:5000",
-        "http://127.0.0.1:5000",
-        "https://legwork-backend.onrender.com",
-      ];
-
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg =
-          "The CORS policy for this site does not allow access from the specified Origin.";
-        return callback(new Error(msg), false);
-      }
-      return callback(null, true);
-    },
+    origin: "*",
     credentials: true,
   })
 );
+
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       // Allow requests with no origin (like mobile apps)
+//       if (!origin) return callback(null, true);
+
+//       const allowedOrigins = [
+//         "http://localhost:8080",
+//         "http://127.0.0.1:8080",
+//         "http://localhost:5000",
+//         "http://127.0.0.1:5000",
+//         "https://legwork-backend.onrender.com",
+//       ];
+
+//       if (allowedOrigins.indexOf(origin) === -1) {
+//         const msg =
+//           "The CORS policy for this site does not allow access from the specified Origin.";
+//         return callback(new Error(msg), false);
+//       }
+//       return callback(null, true);
+//     },
+//     credentials: true,
+//   })
+// );
 
 // * Connect to mongoDB
 connectMongo();
@@ -62,7 +62,17 @@ passport.use("refresh", passportRefreshStrat());
 app.use(indexRouter);
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("H O M E P A G E");
+  console.log("Hello World this is the homepage");
+  res.json({ message: "H O M E P A G E" });
+});
+
+app.get("/health", (req: Request, res: Response) => {
+  console.log("Health check endpoint hit");
+  res.status(200).json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
 });
 
 app.listen(port, () =>
