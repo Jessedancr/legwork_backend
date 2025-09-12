@@ -36,7 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.clientModel = exports.dancerModel = exports.userModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 // * Base user schema
-const userSchema = new mongoose_1.Schema({
+const baseUserFields = {
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     username: { type: String, required: true, unique: true, lowercase: true },
@@ -45,24 +45,32 @@ const userSchema = new mongoose_1.Schema({
     password: { type: String, required: true, minlength: 6 },
     bio: { type: String, default: "" },
     userType: { type: String, required: true, enum: ["dancer", "client"] },
-    profilePicture: { type: String, default: "" },
+    profilePicture: { type: mongoose_1.Schema.Types.Map, default: {} },
     deviceToken: { type: String, default: "" },
+    refreshToken: { type: String, default: null, select: false },
+};
+const userSchema = new mongoose_1.Schema(baseUserFields, {
+    timestamps: true,
 });
 // * Dancer schema
 const dancerSchema = new mongoose_1.Schema({
-    jobPrefs: { type: mongoose_1.Schema.Types.Mixed, default: {} },
-    resume: { type: mongoose_1.Schema.Types.Mixed, default: {} },
-});
+    ...baseUserFields,
+    jobPrefs: { type: mongoose_1.Schema.Types.Map, default: {} },
+    resume: { type: mongoose_1.Schema.Types.Map, default: {} },
+}, { timestamps: true });
 // * Client schema
 const clientSchema = new mongoose_1.Schema({
-    danceStylePrefs: { type: [mongoose_1.Schema.Types.String], default: [] },
-    jobOfferings: { type: [mongoose_1.Schema.Types.Mixed], default: [] },
+    ...baseUserFields,
+    danceStylePrefs: { type: [mongoose_1.Schema.Types.Array], default: [] },
+    jobOfferings: { type: [mongoose_1.Schema.Types.Array], default: [] },
     organisationName: { type: String, default: "" },
-    hiringHistory: { type: mongoose_1.Schema.Types.Map },
-});
+    hiringHistory: { type: mongoose_1.Schema.Types.Map, default: {} },
+}, { timestamps: true });
 // * Base user model
 exports.userModel = mongoose_1.default.model("user", userSchema);
-// * Dancer model extending user model using discriminator()
-exports.dancerModel = exports.userModel.discriminator("dancer", dancerSchema);
-// * Client model extending user model using discriminator()
-exports.clientModel = exports.userModel.discriminator("client", clientSchema);
+// * Create separate base models for each collection
+exports.dancerModel = mongoose_1.default.model("dancer", dancerSchema, "dancers" // Custom collection name
+);
+// * Client model
+exports.clientModel = mongoose_1.default.model("client", clientSchema, "clients" // Custom collection name
+);
