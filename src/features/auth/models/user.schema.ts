@@ -15,7 +15,7 @@ const baseUserFields = {
   password: { type: String, required: true, minlength: 6 },
   bio: { type: String, default: "" },
   userType: { type: String, required: true, enum: ["dancer", "client"] },
-  profilePicture: { type: String, default: "" },
+  profilePicture: { type: Schema.Types.Map, default: {} },
   deviceToken: { type: String, default: "" },
   refreshToken: { type: String, default: null, select: false },
 };

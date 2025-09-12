@@ -59,7 +59,7 @@ export async function signup(
   // * If passwords dont match
   if (password != password2) {
     console.log("Passwords do not match!");
-    return res.status(400).send("Passwords do not match!");
+    return res.status(400).json({ message: "Passwords do not match!" });
   }
 
   // * Hash the password
@@ -106,7 +106,6 @@ export async function signup(
         httpOnly: true,
         maxAge: refreshTokenMaxAge * 1000,
       });
-      console.log("Token generated for dancer: ", accessToken);
       res.status(201).json({
         message: "dancer registered successfully",
         dancer: savedDancer,
@@ -143,7 +142,6 @@ export async function signup(
         maxAge: refreshTokenMaxAge * 1000,
       });
 
-      console.log("Token generated for client: ", accessToken);
       res.status(201).json({
         message: "Client registered successfully",
         client: savedClient,
@@ -151,7 +149,9 @@ export async function signup(
         refreshToken,
       });
     } else {
-      res.status(400).send("Invalid user type. Must be a dancer or client");
+      res
+        .status(400)
+        .json({ message: "Invalid user type. Must be a dancer or client" });
     }
   } catch (error) {
     console.log("An unknown error occured: ", error);
@@ -165,7 +165,7 @@ export async function login(req: Request<{}, {}, loginReqBody>, res: Response) {
 
   // * If there are errors while validating the user's input
   if (!result.isEmpty())
-    return res.status(400).send({ errors: result.array() });
+    return res.status(400).json({ errors: result.array() });
 
   // * Validated data
   const data = matchedData<loginReqBody>(req);
@@ -175,7 +175,6 @@ export async function login(req: Request<{}, {}, loginReqBody>, res: Response) {
     // * Find user by username or email
     const user = await findUserByUsernameOrEmail(usernameOrEmail);
     if (!user) {
-      console.log("User not found");
       return res.status(404).json({ message: "User not found" });
     }
 
