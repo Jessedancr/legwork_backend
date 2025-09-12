@@ -8,6 +8,9 @@ import {
   ClientInterface,
   DancerInterface,
 } from "../../features/auth/models/user.interface";
+import { Readable } from "stream";
+import cloudinary from "../../core/configs/cloudinary";
+import { UploadApiResponse } from "cloudinary";
 
 // * HASH PASSWORD
 export const hashPassword = async (password: string) => {
@@ -70,7 +73,6 @@ export const saveDancer = async (dancerData: DancerInterface) => {
   try {
     // * Save to db
     const savedDancer = await dancer.save();
-    console.log("Dancer saved: ", savedDancer);
     return savedDancer;
   } catch (error) {
     console.log("Error saving dancer to db: ", error);
@@ -94,7 +96,7 @@ export const saveClient = async (clientData: ClientInterface) => {
 
 // * GENERATE JWT TOKENS
 export const accessTokenMaxAge = 60 * 60 * 24; // 1 day
-export const refreshTokenMaxAge = 60 * 60 * 24 * 7; // 1 weel
+export const refreshTokenMaxAge = 60 * 60 * 24 * 7; // 1 week
 export const generateAccessToken = async (id: string) => {
   return jwt.sign({ id }, process.env.JWT_SECRET as string, {
     expiresIn: accessTokenMaxAge,
@@ -154,10 +156,8 @@ export const findUserById = async (id: string) => {
     ]);
 
     if (dancer) {
-      console.log("Dancer found by ID");
       return dancer;
     } else if (client) {
-      console.log("Client found by ID");
       return client;
     } else {
       console.log("User not found in either collection");
@@ -196,5 +196,41 @@ export const findUserAndUpdate = async (
     }
   } catch (error) {
     console.log("Error finding  and updating user: ", error);
+    return error;
+  }
+};
+
+// * CLOUDINARY UPLOAD SETUP
+export const uploadToCloudinary = (
+  buffer: Buffer,
+  folder: string
+): Promise<UploadApiResponse> => {
+  try {
+    return new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder,
+          resource_type: "auto",
+        },
+
+        (error, result) => {
+          if (error) {
+            console.error("Failed to upload to cloudinary: ", error);
+            return reject(error);
+          }
+          if (!result) {
+            return reject(
+              new Error("Cloudinary upload returned undefined result")
+            );
+          }
+          resolve(result);
+        }
+      );
+      // Pipe the buffer to the Cloudinary upload stream
+      Readable.from(buffer).pipe(stream);
+    });
+  } catch (error) {
+    console.log("Unexpected cloudinary stream error: ", error);
+    return Promise.reject(error);
   }
 };

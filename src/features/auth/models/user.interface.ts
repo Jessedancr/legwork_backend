@@ -13,7 +13,7 @@ export interface UserInterface extends Document {
   password: string;
   bio?: string;
   userType: "dancer" | "client";
-  profilePicture?: string;
+  profilePicture?: Record<string, any>;
   deviceToken: string;
   refreshToken: string | null;
 }

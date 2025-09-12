@@ -20,11 +20,9 @@ export const passprtJWTStrat = () => {
           clientModel.findById(payload.id),
         ]);
         if (dancer) {
-          console.log("JWT Strategy: User found in dancers collection");
           return done(null, dancer);
         }
         if (client) {
-          console.log("JWT Strategy: User found in clients collection");
           return done(null, client);
         }
 
