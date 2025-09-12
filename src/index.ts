@@ -22,7 +22,6 @@ app.use(
   })
 );
 
-
 // * Connect to mongoDB
 connectMongo();
 
@@ -38,24 +37,9 @@ passport.use("refresh", passportRefreshStrat());
 app.use(indexRouter);
 
 app.get("/", (req: Request, res: Response) => {
-  console.log("Hello World this is the homepage");
   res.json({ message: "H O M E P A G E" });
 });
 
-app.get("/health", (req: Request, res: Response) => {
-  console.log("Health check endpoint hit");
-  res.status(200).json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
-});
-
-// app.listen(port, () =>
-//   console.log(`Server started on http://localhost:${port}`)
-// );
-
 app.listen(port, "0.0.0.0", () => {
-  console.log(`Server started on port ${port}`);
+  console.log(`Server started on http://localhost:${port}`);
 });
-
