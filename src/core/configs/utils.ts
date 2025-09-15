@@ -86,7 +86,6 @@ export const saveClient = async (clientData: ClientInterface) => {
   try {
     // * Save to db
     const savedClient = await client.save();
-    console.log("Client saved: ", savedClient);
     return savedClient;
   } catch (error) {
     console.log("Error saving client to db: ", error);
