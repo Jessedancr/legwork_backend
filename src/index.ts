@@ -12,34 +12,39 @@ import {
 import cors from "cors";
 import morgan from "morgan";
 
-const app: Application = express();
-const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
-// Enable CORS
-app.use(
-  cors({
-    origin: "*",
-    credentials: true,
-  })
-);
+export default function createApp(db: any) {
+  const app: Application = express();
 
-// * Connect to mongoDB
-connectMongo();
+  // Enable CORS
+  app.use(
+    cors({
+      origin: "*",
+      credentials: true,
+    })
+  );
 
-// * Middlewares
-app.use(express.json());
-app.use(cookieParser());
-app.use(morgan("dev"));
-app.use(passport.initialize()); // Initialize passport
-passport.use("jwt", passprtJWTStrat());
-passport.use("refresh", passportRefreshStrat());
+  // * Connect to mongoDB
+  // connectMongo();
 
-// * App router
-app.use(indexRouter);
+  // * Middlewares
+  app.use(express.json());
+  app.use(cookieParser());
+  app.use(morgan("dev"));
+  app.use(passport.initialize()); // Initialize passport
+  passport.use("jwt", passprtJWTStrat());
+  passport.use("refresh", passportRefreshStrat());
 
-app.get("/", (req: Request, res: Response) => {
-  res.json({ message: "H O M E P A G E" });
-});
+  // * App router
+  app.use(indexRouter);
 
-app.listen(port, "0.0.0.0", () => {
-  console.log(`Server started on http://localhost:${port}`);
-});
+  app.get("/", (req: Request, res: Response) => {
+    res.json({ message: "H O M E P A G E" });
+  });
+
+  app.post("/test", (req: Request, res: Response) => {
+    res.status(200).json({ message: "Everything OK" });
+  });
+
+  return app;
+}
+
