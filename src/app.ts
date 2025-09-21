@@ -4,7 +4,6 @@ import express, { Application, Request, Response } from "express";
 import cookieParser from "cookie-parser";
 import passport from "passport";
 import indexRouter from "./core/configs/index.router";
-import connectMongo from "./core/configs/connectMongo";
 import {
   passprtJWTStrat,
   passportRefreshStrat,
@@ -22,9 +21,6 @@ export default function createApp(db: any) {
       credentials: true,
     })
   );
-
-  // * Connect to mongoDB
-  // connectMongo();
 
   // * Middlewares
   app.use(express.json());
@@ -47,4 +43,3 @@ export default function createApp(db: any) {
 
   return app;
 }
-

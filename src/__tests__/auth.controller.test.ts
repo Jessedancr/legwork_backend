@@ -5,7 +5,7 @@ const app = createApp("../core/configs/utils");
 import request from "supertest";
 import { jest } from "@jest/globals";
 import * as utils from "../core/configs/utils";
-import createApp from "..";
+import createApp from "../app";
 
 // * Mock Funcs from utils.ts
 const mockFindUserByUsernameOrEmail = jest.mocked(
@@ -14,8 +14,11 @@ const mockFindUserByUsernameOrEmail = jest.mocked(
 const mockComparePw = jest.mocked(utils.comparePasswords);
 const mockGenerateAccessToken = jest.mocked(utils.generateAccessToken);
 const mockGenerateRefreshToken = jest.mocked(utils.generateRefreshToken);
-const mockHashRefreshToken = jest.mocked(utils.hashPassword);
+const mockHashData = jest.mocked(utils.hashPassword);
 const mockFindUserAndUpdate = jest.mocked(utils.findUserAndUpdate);
+const mockCheckUserExists = jest.mocked(utils.checkUserExists);
+const mockSaveDancer = jest.mocked(utils.saveDancer);
+const mockSaveClient = jest.mocked(utils.saveClient);
 
 describe("POST /api/auth/login", () => {
   const fakeUser = {
@@ -57,7 +60,7 @@ describe("POST /api/auth/login", () => {
     mockComparePw.mockResolvedValue(true);
     mockGenerateAccessToken.mockResolvedValue("accessToken");
     mockGenerateRefreshToken.mockResolvedValue("refreshToken");
-    mockHashRefreshToken.mockResolvedValue("hashedRefreshToken");
+    mockHashData.mockResolvedValue("hashedRefreshToken");
     mockFindUserAndUpdate.mockResolvedValue(fakeUser);
 
     const res = await request(app)
@@ -70,9 +73,7 @@ describe("POST /api/auth/login", () => {
   });
 
   it("Should return 500 if server error occurs", async () => {
-    mockFindUserByUsernameOrEmail.mockRejectedValue(
-      new Error("Internal server error")
-    );
+    mockFindUserByUsernameOrEmail.mockRejectedValue("Internal server error");
 
     const res = await request(app)
       .post("/api/auth/login")
@@ -80,5 +81,123 @@ describe("POST /api/auth/login", () => {
 
     expect(res.status).toBe(500);
     expect(res.body).toHaveProperty("message", "internal server error");
+  });
+});
+
+describe("POST api/auth/signup", () => {
+  let fakeUser: any;
+
+  // * Before each test, clear all mocks
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Reset fakeUser to its original state
+    fakeUser = {
+      id: "123",
+      firstName: "Jesse",
+      lastName: "Ikemefuna",
+      email: "jesseikemefuna@gmail.com",
+      phoneNumber: "08166164158",
+      userType: "dancer",
+      username: "jessedancr",
+      password: "password",
+      password2: "password",
+    } as any;
+  });
+
+  it("Should return 201 if user created successfully", async () => {
+    mockHashData.mockResolvedValue("hashedPass");
+    mockCheckUserExists.mockResolvedValue({ exists: false });
+    mockSaveDancer.mockResolvedValue(fakeUser);
+    mockGenerateAccessToken.mockResolvedValue("accessToken");
+    mockGenerateRefreshToken.mockResolvedValue("refreshToken");
+    mockHashData.mockResolvedValue("hashedRefreshToken");
+    mockFindUserAndUpdate.mockResolvedValue(fakeUser);
+
+    const res = await request(app).post("/api/auth/signup").send({
+      firstName: "Jesse",
+      lastName: "Ikemefuna",
+      email: "jesseikemefuna@gmail.com",
+      phoneNumber: "08166164158",
+      userType: "dancer",
+      username: "jessedancr",
+      password: "password",
+      password2: "password",
+    });
+
+    expect(res.status).toBe(201);
+  });
+
+  it("Should return 400 if user already exists with username", async () => {
+    mockHashData.mockResolvedValue("hashedPass");
+    mockCheckUserExists.mockResolvedValue({
+      exists: true,
+      field: "username",
+    });
+
+    const { id, ...newFakeUser } = fakeUser;
+
+    const res = await request(app).post("/api/auth/signup").send(newFakeUser);
+
+    expect(res.status).toBe(400);
+  });
+
+  it("Should return 400 if user already exists with email", async () => {
+    mockHashData.mockResolvedValue("hashedPass");
+    mockCheckUserExists.mockResolvedValue({
+      exists: true,
+      field: "email",
+    });
+
+    const { id, ...newFakeUser } = fakeUser;
+
+    const res = await request(app).post("/api/auth/signup").send(newFakeUser);
+
+    expect(res.status).toBe(400);
+  });
+
+  it("Should return 400 if the user already exists with the phone number", async () => {
+    mockHashData.mockResolvedValue("hashedPass");
+    mockCheckUserExists.mockResolvedValue({
+      exists: true,
+      field: "phoneNumber",
+    });
+
+    const { id, ...newFakeUser } = fakeUser;
+
+    const res = await request(app).post("/api/auth/signup").send(newFakeUser);
+
+    expect(res.status).toBe(400);
+  });
+
+  it("Should return 400 if the user type is invalid", async () => {
+    mockHashData.mockResolvedValue("hashedPass");
+    mockCheckUserExists.mockResolvedValue({ exists: false });
+
+    fakeUser.userType = "unknownUserType";
+    const { id, ...newFakeUser } = fakeUser;
+
+    const res = await request(app).post("/api/auth/signup").send(newFakeUser);
+
+    expect(res.status).toBe(400);
+  });
+
+  it("Should return 400 if passwords do not match", async () => {
+    fakeUser.password2 = "wrongPass2";
+    const { id, ...newFakeUser } = fakeUser;
+
+    const res = await request(app).post("/api/auth/signup").send(newFakeUser);
+
+    expect(res.status).toBe(400);
+  });
+
+  it("Should return 500 if server error occurs", async () => {
+    const { id, ...newFakeUser } = fakeUser;
+    mockHashData.mockRejectedValue("Internal server error");
+    mockCheckUserExists.mockRejectedValue("Internal server error");
+    mockSaveDancer.mockRejectedValue("Internal server error");
+    const res = await request(app).post("/api/auth/signup").send(newFakeUser);
+
+    expect(res.status).toBe(500);
   });
 });

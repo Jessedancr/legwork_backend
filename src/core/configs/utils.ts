@@ -36,35 +36,43 @@ export const checkUserExists = async (
   username: string,
   email: string,
   phoneNumber: string
-): Promise<{ exists: boolean; field?: string }> => {
-  // Check username
-  const [dancerUsername, clientUsername] = await Promise.all([
-    dancerModel.findOne({ username }),
-    clientModel.findOne({ username }),
-  ]);
-  if (dancerUsername || clientUsername) {
-    return { exists: true, field: "username" };
-  }
+): Promise<{ exists: boolean; field?: string; error?: string }> => {
+  try {
+    // Check username
+    const [dancerUsername, clientUsername] = await Promise.all([
+      dancerModel.findOne({ username }),
+      clientModel.findOne({ username }),
+    ]);
+    if (dancerUsername || clientUsername) {
+      return { exists: true, field: "username" };
+    }
 
-  // Check email
-  const [dancerEmail, clientEmail] = await Promise.all([
-    dancerModel.findOne({ email }),
-    clientModel.findOne({ email }),
-  ]);
-  if (dancerEmail || clientEmail) {
-    return { exists: true, field: "email" };
-  }
+    // Check email
+    const [dancerEmail, clientEmail] = await Promise.all([
+      dancerModel.findOne({ email }),
+      clientModel.findOne({ email }),
+    ]);
+    if (dancerEmail || clientEmail) {
+      return { exists: true, field: "email" };
+    }
 
-  // Check phone number
-  const [dancerPhone, clientPhone] = await Promise.all([
-    dancerModel.findOne({ phoneNumber }),
-    clientModel.findOne({ phoneNumber }),
-  ]);
-  if (dancerPhone || clientPhone) {
-    return { exists: true, field: "phoneNumber" };
-  }
+    // Check phone number
+    const [dancerPhone, clientPhone] = await Promise.all([
+      dancerModel.findOne({ phoneNumber }),
+      clientModel.findOne({ phoneNumber }),
+    ]);
+    if (dancerPhone || clientPhone) {
+      return { exists: true, field: "phoneNumber" };
+    }
 
-  return { exists: false };
+    return { exists: false };
+  } catch (error) {
+    console.error("Unknown error in checkUserExists func", error);
+    return {
+      exists: false,
+      error: "Unexpected error while checking if user exists",
+    };
+  }
 };
 
 // * SAVE DANCER TO DB

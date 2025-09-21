@@ -1,5 +1,5 @@
 import connectMongo from "./core/configs/connectMongo";
-import createApp from "./index";
+import createApp from "./app";
 
 const app = createApp(connectMongo());
 
