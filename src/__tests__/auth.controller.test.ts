@@ -1,11 +1,11 @@
 // * This replaces all the funcs in this module with a fake one
 jest.mock("../core/configs/utils");
+import createApp from "../app";
 const app = createApp("../core/configs/utils");
 
 import request from "supertest";
 import { jest } from "@jest/globals";
 import * as utils from "../core/configs/utils";
-import createApp from "../app";
 
 // * Mock Funcs from utils.ts
 const mockFindUserByUsernameOrEmail = jest.mocked(

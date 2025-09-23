@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import passport from "passport";
 import indexRouter from "./core/configs/index.router";
 import {
-  passprtJWTStrat,
+  passportJWTStrat,
   passportRefreshStrat,
 } from "./core/middlewares/passportStrats/authjwt.middleware";
 import cors from "cors";
@@ -27,7 +27,7 @@ export default function createApp(db: any) {
   app.use(cookieParser());
   app.use(morgan("dev"));
   app.use(passport.initialize()); // Initialize passport
-  passport.use("jwt", passprtJWTStrat());
+  passport.use("jwt", passportJWTStrat());
   passport.use("refresh", passportRefreshStrat());
 
   // * App router

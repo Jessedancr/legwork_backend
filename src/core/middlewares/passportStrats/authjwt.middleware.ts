@@ -7,7 +7,7 @@ import {
   dancerModel,
 } from "../../../features/auth/models/user.schema";
 
-export const passprtJWTStrat = () => {
+export const passportJWTStrat = () => {
   return new JwtStrategy(
     {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -76,6 +76,6 @@ export const authMiddleware = passport.authenticate("jwt", {
 });
 
 // * Middleware to authenticate refresh token
-export const refreshAuthMiddleware = passport.authenticate("jwt", {
+export const refreshAuthMiddleware = passport.authenticate("refresh", {
   session: false,
 });
