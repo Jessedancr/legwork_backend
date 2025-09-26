@@ -62,11 +62,11 @@ export async function signup(
     return res.status(400).json({ message: "Passwords do not match!" });
   }
 
-  // * Hash the password
-  const hashedPassword = await hashPassword(password);
-  data.password = hashedPassword;
-
   try {
+    // * Hash the password
+    const hashedPassword = await hashPassword(password);
+    data.password = hashedPassword;
+
     // * Check if the user already exists
     const { exists, field } = await checkUserExists(
       username,

@@ -72,4 +72,12 @@ exports.userSignUpValidationSchema = {
             errorMessage: "Password2 must be a minimum of 6 characters",
         },
     },
+    // * Organisation name validation
+    organisationName: {
+        optional: true,
+        isLength: {
+            options: { min: 3, max: 25 },
+            errorMessage: "Organisation name must be between 3 and 25 characters",
+        },
+    },
 };

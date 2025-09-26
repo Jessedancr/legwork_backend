@@ -16,7 +16,7 @@ export async function getUserDetails(req: Request, res: Response) {
 
     if (!user) {
       console.log(`User not found with the provided ID: ${userId}`);
-      res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
 
     res.status(200).json({ message: "User's details gotten", user });
