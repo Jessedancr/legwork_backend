@@ -10,8 +10,13 @@ export function getUsers(req: Request, res: Response) {}
 
 export async function getUserDetails(req: Request, res: Response) {
   const userId = req.params.userId;
+  res.setHeader("Content-Type", "application/json");
 
   try {
+    if (!userId || userId === null || userId === "" || userId === undefined) {
+      return res.status(404).json({ message: "Invalid user ID" });
+    }
+
     const user = await findUserById(userId);
 
     if (!user) {
