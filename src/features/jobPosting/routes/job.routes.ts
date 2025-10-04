@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { authMiddleware } from "../../../core/middlewares/passportStrats/authjwt.middleware";
+import {
+  authMiddleware,
+  clientOnly,
+} from "../../../core/middlewares/passportStrats/authjwt.middleware";
 import {
   changeStatus,
   createJob,
@@ -12,12 +15,18 @@ const jobRouter: Router = Router();
 jobRouter.post(
   "/create-job",
   authMiddleware,
+  clientOnly,
   checkSchema(postJobValidationSchema),
   createJob
 );
 
 jobRouter.get("/fetch-jobs", authMiddleware, fetchJobs);
 
-jobRouter.patch("/:jobId/change-status", authMiddleware, changeStatus);
+jobRouter.patch(
+  "/:jobId/change-status",
+  authMiddleware,
+  clientOnly,
+  changeStatus
+);
 
 export default jobRouter;

@@ -6,6 +6,21 @@ import {
   clientModel,
   dancerModel,
 } from "../../../features/auth/models/user.schema";
+import { NextFunction, Request, Response } from "express";
+import UserType from "../../enums/userTypeEnum";
+
+declare global {
+  namespace Express {
+    interface User {
+      id: string;
+      userType: UserType.Client | UserType.Dancer;
+      firstName: string;
+      lastName: string;
+      username: string;
+      email: string;
+    }
+  }
+}
 
 export const passportJWTStrat = () => {
   return new JwtStrategy(
@@ -79,3 +94,31 @@ export const authMiddleware = passport.authenticate("jwt", {
 export const refreshAuthMiddleware = passport.authenticate("refresh", {
   session: false,
 });
+
+export const clientOnly = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Unauthorised access" });
+  }
+
+  if (req.user.userType !== UserType.Client) {
+    return res
+      .status(403)
+      .json({ message: "Access denied, only clients can access this" });
+  }
+
+  next();
+};
+
+export const dancerOnly = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Unauthorised access" });
+  }
+
+  if (req.user.userType !== UserType.Dancer) {
+    return res
+      .status(403)
+      .json({ message: "Access denied, only dancers can access this" });
+  }
+
+  next();
+};
