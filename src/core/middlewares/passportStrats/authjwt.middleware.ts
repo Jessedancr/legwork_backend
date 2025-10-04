@@ -103,7 +103,7 @@ export const clientOnly = (req: Request, res: Response, next: NextFunction) => {
   if (req.user.userType !== UserType.Client) {
     return res
       .status(403)
-      .json({ message: "Access denied, only clients can access this" });
+      .json({ message: "Forbidden, only clients can access this" });
   }
 
   next();

@@ -8,11 +8,15 @@ jest.mock("../core/middlewares/passportStrats/authjwt.middleware", () => {
     req.user = { id: "123" };
     next();
   });
+  const mockClientOnlyMiddleware = jest.fn((req: any, res: any, next: any) => {
+    req.user = { userType: "client" };
+    next();
+  });
   return {
     passportJWTStrat: () => jest.fn(),
     passportRefreshStrat: () => jest.fn(),
     authMiddleware: mockAuthMiddleware,
-    clientOnly: () => jest.fn(),
+    clientOnly: mockClientOnlyMiddleware,
     dancerOnly: () => jest.fn(),
   };
 });
@@ -25,15 +29,12 @@ jest.mock("../features/auth/models/user.schema", () => {
 
 import * as utils from "../core/configs/utils";
 import * as authMiddlewareModule from "../core/middlewares/passportStrats/authjwt.middleware";
-import { dancerModel, clientModel } from "../features/auth/models/user.schema";
 
-const mockDancerModel = jest.mocked(dancerModel);
-const mockClientModel = jest.mocked(clientModel);
 const app = createApp("../core/configs/utils");
 
 const mockSaveJob = jest.mocked(utils.saveJob);
 const mockAuthMiddleware = authMiddlewareModule.authMiddleware as jest.Mock;
-const mockFindUserById = jest.mocked(utils.findUserById);
+const mockClientOnlyMiddleware = authMiddlewareModule.clientOnly as jest.Mock;
 const mockFetchAllJobs = jest.mocked(utils.fetchAllJobs);
 const mockFetchJobsByClientId = jest.mocked(utils.fetchJobsByClientId);
 const mockUpdateJobStatus = jest.mocked(utils.updateJobStatus);
@@ -128,6 +129,30 @@ describe("POST /api/jobs/create-job", () => {
       });
 
     expect(res.status).toBe(401);
+  });
+
+  it("Should return 403 if dancer tries to access this route", async () => {
+    mockClientOnlyMiddleware.mockImplementationOnce((req: any, res: any) => {
+      req.user = { userType: "dancer" };
+      return res.status(403).json({ message: "Forbidden" });
+    });
+
+    const res = await request(app)
+      .post("/api/jobs/create-job")
+      .send({
+        jobTitle: "Job title",
+        pay: "70,000",
+        amtOfDancers: "20",
+        jobDuration: "1 day",
+        jobLocation: "Ikorodu",
+        prefDanceStyles: ["Hiphop", "Afro"],
+        jobType: "Job type",
+        jobDescr:
+          "This is my job description. Hopefully it is more than 20 characters",
+        status: false,
+      });
+
+    expect(res.status).toBe(403);
   });
 });
 
@@ -265,5 +290,18 @@ describe("PATCH /api/jobs/:jobId/change-status - CLIENT", () => {
       .patch("/api/jobs/456/change-status")
       .send({ status: false });
     expect(res.status).toBe(500);
+  });
+
+  it("Should return 403 if dancer tries to access this route", async () => {
+    mockClientOnlyMiddleware.mockImplementationOnce((req: any, res: any) => {
+      req.user = { userType: "dancer" };
+      return res.status(403).json({ message: "Forbidden" });
+    });
+
+    const res = await request(app)
+      .patch("/api/jobs/no-job-id/change-status")
+      .send({ status: false });
+
+    expect(res.status).toBe(403);
   });
 });
