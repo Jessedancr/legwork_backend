@@ -11,6 +11,9 @@ import {
 import { Readable } from "stream";
 import cloudinary from "../../core/configs/cloudinary";
 import { UploadApiResponse } from "cloudinary";
+import { JobInterface } from "../../features/jobPosting/models/job.interface";
+import { jobModel } from "../../features/jobPosting/models/job.schema";
+import mongoose from "mongoose";
 
 // * HASH PASSWORD
 export const hashPassword = async (password: string) => {
@@ -239,5 +242,63 @@ export const uploadToCloudinary = (
   } catch (error) {
     console.log("Unexpected cloudinary stream error: ", error);
     return Promise.reject(error);
+  }
+};
+
+// * SAVE JOB TO DB
+export const saveJob = async (jobData: JobInterface) => {
+  const job = new jobModel(jobData);
+
+  try {
+    const savedJob = await job.save();
+    return savedJob;
+  } catch (error) {
+    console.log("Error saving job to DB: ", error);
+    throw error;
+  }
+};
+
+// * FETCH ALL JOBS
+export const fetchAllJobs = async () => {
+  try {
+    const jobs = await jobModel.find({ status: true }).sort({ createdAt: -1 });
+    return jobs;
+  } catch (error) {
+    console.log("Error fetching all jobs: ", error);
+    return null;
+  }
+};
+
+// * FETCH JOBS BY CLIENT ID
+export const fetchJobsByClientId = async (clientId: string) => {
+  try {
+    const jobs = await jobModel.find({ clientId }).sort({ createdAt: -1 });
+    return jobs;
+  } catch (error) {
+    console.log("Error fetching jobs by client ID: ", error);
+    return null;
+  }
+};
+
+// * UPDATE JOB STATUS
+export const updateJobStatus = async (jobId: string, jobStatus: boolean) => {
+  try {
+    const updatedJobDoc = await jobModel.findByIdAndUpdate(
+      jobId,
+      { $set: { status: jobStatus } },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedJobDoc) {
+      console.log(`Job with ID ${jobId} not found`);
+      return null;
+    }
+    return updatedJobDoc;
+  } catch (error) {
+    console.log("Error finding and updating job: ", error);
+    return error;
   }
 };

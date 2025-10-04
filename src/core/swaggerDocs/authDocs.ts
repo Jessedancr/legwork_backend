@@ -158,7 +158,7 @@
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "dancer registered successfully" or "Client registered successfully"
+ *                   example: "User registered successfully"
  *                 dancer:
  *                   $ref: '#/components/schemas/Dancer'
  *                   description: Present only for dancer registration
@@ -373,7 +373,7 @@
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Refresh token not provided" or "Invalid refresh token"
+ *                   example: "Refresh token not provided or invalid"
  *       404:
  *         description: User not found
  *         content:

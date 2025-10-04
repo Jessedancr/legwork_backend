@@ -37,8 +37,8 @@ const dancerSchema = new Schema<DancerInterface>(
 const clientSchema = new Schema<ClientInterface>(
   {
     ...baseUserFields,
-    danceStylePrefs: { type: [Schema.Types.Array], default: [] },
-    jobOfferings: { type: [Schema.Types.Array], default: [] },
+    danceStylePrefs: { type: [String], default: [] },
+    jobOfferings: { type: [String], default: [] },
     organisationName: { type: String, default: "" },
     hiringHistory: { type: Schema.Types.Map, default: {} },
   },
