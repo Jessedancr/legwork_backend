@@ -13,7 +13,9 @@ import cloudinary from "../../core/configs/cloudinary";
 import { UploadApiResponse } from "cloudinary";
 import { JobInterface } from "../../features/jobPosting/models/job.interface";
 import { jobModel } from "../../features/jobPosting/models/job.schema";
-import mongoose from "mongoose";
+import { JobApplicationInterface } from "../../features/jobApplication/models/jobApplication.interface";
+import { jobApplicationModel } from "../../features/jobApplication/models/jobApplication.schema";
+import { ObjectId } from "mongoose";
 
 // * HASH PASSWORD
 export const hashPassword = async (password: string) => {
@@ -300,5 +302,49 @@ export const updateJobStatus = async (jobId: string, jobStatus: boolean) => {
   } catch (error) {
     console.log("Error finding and updating job: ", error);
     return error;
+  }
+};
+
+const getClientIdFromJob = async (jobId: ObjectId) => {
+  try {
+    const job = await jobModel.findById(jobId);
+    if (!job) {
+      console.log(`Job with ID ${jobId} not found`);
+      throw new Error("The job you are applying for does not exist");
+    }
+    return job.clientId;
+  } catch (error) {
+    console.log("Error getting client ID from job: ", error);
+    return null;
+  }
+};
+
+export const saveJobApplication = async (
+  jobApplicationData: JobApplicationInterface
+): Promise<{
+  exists: boolean;
+  application: JobApplicationInterface;
+}> => {
+  const application = new jobApplicationModel(jobApplicationData);
+
+  try {
+    // Query the collection to ensure a unique application per dancer per job
+    const existingApplication = await jobApplicationModel.findOne({
+      dancerId: jobApplicationData.dancerId,
+      jobId: jobApplicationData.jobId,
+    });
+
+    if (existingApplication) {
+      return { exists: true, application: existingApplication };
+    }
+
+    const clientId = await getClientIdFromJob(jobApplicationData.jobId);
+    application.clientId = clientId as ObjectId;
+
+    const savedApplication = await application.save();
+    return { exists: false, application: savedApplication };
+  } catch (error) {
+    console.log("Error saving job application to DB: ", error);
+    throw error;
   }
 };

@@ -14,6 +14,7 @@ jest.mock("../core/middlewares/passportStrats/authjwt.middleware", () => {
     passportJWTStrat: () => jest.fn(),
     passportRefreshStrat: () => jest.fn(),
     clientOnly: () => jest.fn(),
+    dancerOnly: () => jest.fn(),
     authMiddleware: mockAuthMiddleware,
   };
 });

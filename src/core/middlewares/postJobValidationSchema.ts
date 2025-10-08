@@ -1,11 +1,5 @@
 import { body } from "express-validator";
 
-const validPostJob = [
-  body("job")
-    .isArray({ min: 1 })
-    .withMessage("You must have at least one preffered dance style"),
-];
-
 export const postJobValidationSchema = {
   // * Job title validation
   jobTitle: {
@@ -58,8 +52,8 @@ export const postJobValidationSchema = {
     notEmpty: { errorMessage: "Job description can't be empty" },
     isString: true,
     isLength: {
-      options: { min: 20, max: 100 },
-      errorMessage: "Job description must be between 20 and 100 characters",
+      options: { min: 10, max: 150 },
+      errorMessage: "Job description must be between 10 and 150 characters",
     },
   },
 
