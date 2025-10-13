@@ -348,3 +348,48 @@ export const saveJobApplication = async (
     throw error;
   }
 };
+
+export const fetchApplicationsByJobId = async (
+  jobId: string,
+  clientId: string
+) => {
+  try {
+    const apps = await jobApplicationModel
+      .find({ jobId: jobId, clientId: clientId })
+      .sort({ createdAt: -1 });
+    return apps;
+  } catch (error) {
+    console.log("Error fetching applications by job ID: ", error);
+    return null;
+  }
+};
+
+const fetchJobById = async (id: ObjectId) => {
+  try {
+    const job = await jobModel.findById(id);
+    return job;
+  } catch (error) {
+    console.log("Error fetching job by ID: ", error);
+    return null;
+  }
+};
+
+export const fetchApplicationsByDancerId = async (dancerId: string) => {
+  try {
+    const apps = await jobApplicationModel
+      .find({ dancerId })
+      .sort({ createdAt: -1 });
+
+    const appsWithJobs = await Promise.all(
+      apps.map(async (app) => {
+        const job = await fetchJobById(app.jobId);
+        return { application: app, job };
+      })
+    );
+
+    return appsWithJobs;
+  } catch (error) {
+    console.log("Error fetching applications be Dancer ID: ", error);
+    return null;
+  }
+};

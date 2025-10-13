@@ -8,6 +8,7 @@ import { checkSchema } from "express-validator";
 import { jobApplicationValidationSchema } from "../../../core/middlewares/jobApplicationValidation.schema";
 import {
   applyForJob,
+  getApplicationsForDancer,
   getApplicationsForJob,
 } from "../controllers/jobApplication.controllers";
 
@@ -26,4 +27,11 @@ jobApplicationRouter.get(
   authMiddleware,
   clientOnly,
   getApplicationsForJob
+);
+
+jobApplicationRouter.get(
+  "/get-dancer-applications",
+  authMiddleware,
+  dancerOnly,
+  getApplicationsForDancer
 );

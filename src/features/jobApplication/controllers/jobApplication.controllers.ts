@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
 import { matchedData, validationResult } from "express-validator";
-import { saveJobApplication } from "../../../core/configs/utils";
+import {
+  fetchApplicationsByDancerId,
+  fetchApplicationsByJobId,
+  saveJobApplication,
+} from "../../../core/configs/utils";
 
 export async function applyForJob(req: Request, res: Response) {
   const result = validationResult(req);
@@ -42,4 +46,38 @@ export async function applyForJob(req: Request, res: Response) {
   }
 }
 
-export async function getApplicationsForJob(req: Request, res: Response) {}
+export async function getApplicationsForJob(req: Request, res: Response) {
+  const { jobId } = req.params;
+  const clientId = req.user?.id as string;
+
+  try {
+    const applications = await fetchApplicationsByJobId(jobId, clientId);
+
+    if (!applications || applications.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No applications found for this job" });
+    }
+    return res.status(200).json({ applications });
+  } catch (error) {
+    console.log("Error fetching applications for job: ", error);
+    return res.status(500).json({ message: "Unknown server error" });
+  }
+}
+
+export async function getApplicationsForDancer(req: Request, res: Response) {
+  const dancerId = req.user?.id as string;
+
+  try {
+    const appsWithJobs = await fetchApplicationsByDancerId(dancerId);
+    if (!appsWithJobs || appsWithJobs.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No applications found for this dancer" });
+    }
+    return res.status(200).json({ appsWithJobs });
+  } catch (error) {
+    console.log("Error fetching dancer's applications: ", error);
+    return res.status(500).json({ message: "Unknown server error" });
+  }
+}
