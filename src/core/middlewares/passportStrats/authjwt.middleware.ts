@@ -117,7 +117,7 @@ export const dancerOnly = (req: Request, res: Response, next: NextFunction) => {
   if (req.user.userType !== UserType.Dancer) {
     return res
       .status(403)
-      .json({ message: "Access denied, only dancers can access this" });
+      .json({ message: "Forbidden, only dancers can access this" });
   }
 
   next();

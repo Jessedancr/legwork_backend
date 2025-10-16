@@ -13,7 +13,9 @@ import cloudinary from "../../core/configs/cloudinary";
 import { UploadApiResponse } from "cloudinary";
 import { JobInterface } from "../../features/jobPosting/models/job.interface";
 import { jobModel } from "../../features/jobPosting/models/job.schema";
-import mongoose from "mongoose";
+import { JobApplicationInterface } from "../../features/jobApplication/models/jobApplication.interface";
+import { jobApplicationModel } from "../../features/jobApplication/models/jobApplication.schema";
+import { ObjectId } from "mongoose";
 
 // * HASH PASSWORD
 export const hashPassword = async (password: string) => {
@@ -300,5 +302,112 @@ export const updateJobStatus = async (jobId: string, jobStatus: boolean) => {
   } catch (error) {
     console.log("Error finding and updating job: ", error);
     return error;
+  }
+};
+
+const getClientIdFromJob = async (jobId: ObjectId) => {
+  try {
+    const job = await jobModel.findById(jobId);
+    if (!job) {
+      console.log(`Job with ID ${jobId} not found`);
+      throw new Error("The job you are applying for does not exist");
+    }
+    return job.clientId;
+  } catch (error) {
+    console.log("Error getting client ID from job: ", error);
+    return null;
+  }
+};
+
+export const saveJobApplication = async (
+  jobApplicationData: JobApplicationInterface
+): Promise<{
+  exists: boolean;
+  application: JobApplicationInterface;
+}> => {
+  const application = new jobApplicationModel(jobApplicationData);
+
+  try {
+    // Query the collection to ensure a unique application per dancer per job
+    const existingApplication = await jobApplicationModel.findOne({
+      dancerId: jobApplicationData.dancerId,
+      jobId: jobApplicationData.jobId,
+    });
+
+    if (existingApplication) {
+      return { exists: true, application: existingApplication };
+    }
+
+    const clientId = await getClientIdFromJob(jobApplicationData.jobId);
+    application.clientId = clientId as ObjectId;
+
+    const savedApplication = await application.save();
+    return { exists: false, application: savedApplication };
+  } catch (error) {
+    console.log("Error saving job application to DB: ", error);
+    throw error;
+  }
+};
+
+export const fetchApplicationsByJobId = async (
+  jobId: string,
+  clientId: string
+) => {
+  try {
+    const apps = await jobApplicationModel
+      .find({ jobId: jobId, clientId: clientId })
+      .sort({ createdAt: -1 });
+    return apps;
+  } catch (error) {
+    console.log("Error fetching applications by job ID: ", error);
+    return null;
+  }
+};
+
+const fetchJobById = async (id: ObjectId) => {
+  try {
+    const job = await jobModel.findById(id);
+    return job;
+  } catch (error) {
+    console.log("Error fetching job by ID: ", error);
+    return null;
+  }
+};
+
+export const fetchApplicationsByDancerId = async (dancerId: string) => {
+  try {
+    const apps = await jobApplicationModel
+      .find({ dancerId })
+      .sort({ createdAt: -1 });
+
+    const appsWithJobs = await Promise.all(
+      apps.map(async (app) => {
+        const job = await fetchJobById(app.jobId);
+        return { application: app, job };
+      })
+    );
+
+    return appsWithJobs;
+  } catch (error) {
+    console.log("Error fetching applications be Dancer ID: ", error);
+    return null;
+  }
+};
+
+export const updateApplicationStatus = async (
+  applicationId: string,
+  status: string
+) => {
+  try {
+    const updatedApp = await jobApplicationModel.findByIdAndUpdate(
+      applicationId,
+      { $set: { applicationStatus: status } },
+      { new: true, runValidators: true }
+    );
+
+    return updatedApp;
+  } catch (error) {
+    console.log("Failed to update application status: ", error);
+    return null;
   }
 };
