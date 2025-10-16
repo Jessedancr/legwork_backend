@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
 import { matchedData, validationResult } from "express-validator";
 import {
+  updateApplicationStatus,
   fetchApplicationsByDancerId,
   fetchApplicationsByJobId,
   saveJobApplication,
 } from "../../../core/configs/utils";
+import { JobApplicationInterface } from "../models/jobApplication.interface";
 
 export async function applyForJob(req: Request, res: Response) {
   const result = validationResult(req);
@@ -78,6 +80,43 @@ export async function getApplicationsForDancer(req: Request, res: Response) {
     return res.status(200).json({ appsWithJobs });
   } catch (error) {
     console.log("Error fetching dancer's applications: ", error);
+    return res.status(500).json({ message: "Unknown server error" });
+  }
+}
+
+export async function acceptApplication(
+  req: Request<{ appId: string }, {}, JobApplicationInterface>,
+  res: Response
+) {
+  const { appId } = req.params;
+  const { applicationStatus } = req.body;
+  console.log(typeof applicationStatus);
+  try {
+    const app = await updateApplicationStatus(appId, applicationStatus);
+    if (!app) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+    return res.status(200).json({ message: "Application accepted", app });
+  } catch (error) {
+    console.log("Error accepting application: ", error);
+    return res.status(500).json({ message: "Unknown server error" });
+  }
+}
+
+export async function rejectApplication(
+  req: Request<{ appId: string }, {}, JobApplicationInterface>,
+  res: Response
+) {
+  const { appId } = req.params;
+  const { applicationStatus } = req.body;
+  try {
+    const app = await updateApplicationStatus(appId, applicationStatus);
+    if (!app) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+    return res.status(200).json({ message: "Application rejected", app });
+  } catch (error) {
+    console.log("Error rejecting application: ", error);
     return res.status(500).json({ message: "Unknown server error" });
   }
 }

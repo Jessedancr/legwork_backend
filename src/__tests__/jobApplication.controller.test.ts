@@ -32,6 +32,7 @@ const app = createApp("../core/configs/utils");
 
 const mockAuthMiddleware = authMiddlewareModule.authMiddleware as jest.Mock;
 const mockDancerOnlyMiddleware = authMiddlewareModule.dancerOnly as jest.Mock;
+const mockClientOnlyMiddleware = authMiddlewareModule.clientOnly as jest.Mock;
 const mockSaveJobApplication = jest.mocked(utils.saveJobApplication);
 const mockFetchApplicationsByJobId = jest.mocked(
   utils.fetchApplicationsByJobId
@@ -39,6 +40,7 @@ const mockFetchApplicationsByJobId = jest.mocked(
 const mockFetchApplicationsByDancerId = jest.mocked(
   utils.fetchApplicationsByDancerId
 );
+const mockUpdateAppStatus = jest.mocked(utils.updateApplicationStatus);
 
 describe("POST /api/job-applications/:jobId/apply-for-job", () => {
   const fakeApplication = {
@@ -252,5 +254,119 @@ describe("GET /api/job-applications/get-dancer-applications", () => {
       "/api/job-applications/get-dancer-applications"
     );
     expect(res.status).toBe(403);
+  });
+});
+
+describe("PATCH /api/job-applications/:appId/accept-app", () => {
+  const fakeApplication = {
+    _id: "123",
+    dancerId: "dancer123",
+    jobId: "job123",
+    clientId: "client123",
+    proposal: "Hire me now because I am the best dancer on the planet",
+    applicationStatus: "accepted",
+  } as any;
+  beforeEach(() => {
+    mockAuthMiddleware.mockImplementation((req: any, res: any, next: any) => {
+      req.user = {
+        id: "123",
+      };
+      next();
+    });
+    mockClientOnlyMiddleware.mockImplementation(
+      (req: any, res: any, next: any) => {
+        req.user = { userType: "client" };
+        next();
+      }
+    );
+  });
+  describe("Accept job application", () => {
+    it("Should accept a job application", async () => {
+      const appId = "app123" as any;
+      mockUpdateAppStatus.mockResolvedValue(fakeApplication);
+      const res = await mockUpdateAppStatus(appId, "accepted");
+      expect(res).toEqual(fakeApplication);
+    });
+  });
+
+  it("Should return 200 with the accepted application", async () => {
+    mockUpdateAppStatus.mockResolvedValue(fakeApplication);
+    const res = await request(app)
+      .patch("/api/job-applications/123/accept-app")
+      .send({ applicationStatus: "accepted" });
+    expect(res.status).toBe(200);
+  });
+
+  it("Should return 404 if application is not found", async () => {
+    mockUpdateAppStatus.mockResolvedValue(null);
+    const res = await request(app)
+      .patch("/api/job-applications/123/accept-app")
+      .send({ applicationStatus: "accepted" });
+    expect(res.status).toBe(404);
+  });
+
+  it("Should return 500 if server error occurs", async () => {
+    mockUpdateAppStatus.mockRejectedValue("Unknown server error");
+    const res = await request(app).patch(
+      "/api/job-applications/123/accept-app"
+    );
+    expect(res.status).toBe(500);
+  });
+});
+
+describe("PATCH /api/job-applications/:appId/reject-app", () => {
+  const fakeApplication = {
+    _id: "123",
+    dancerId: "dancer123",
+    jobId: "job123",
+    clientId: "client123",
+    proposal: "Hire me now because I am the best dancer on the planet",
+    applicationStatus: "rejected",
+  } as any;
+  beforeEach(() => {
+    mockAuthMiddleware.mockImplementation((req: any, res: any, next: any) => {
+      req.user = {
+        id: "123",
+      };
+      next();
+    });
+    mockClientOnlyMiddleware.mockImplementation(
+      (req: any, res: any, next: any) => {
+        req.user = { userType: "client" };
+        next();
+      }
+    );
+  });
+  describe("Reject job application", () => {
+    it("Should reject a job application", async () => {
+      const appId = "app123" as any;
+      mockUpdateAppStatus.mockResolvedValue(fakeApplication);
+      const res = await mockUpdateAppStatus(appId, "rejected");
+      expect(res).toEqual(fakeApplication);
+    });
+  });
+
+  it("Should return 200 with the rejected application", async () => {
+    mockUpdateAppStatus.mockResolvedValue(fakeApplication);
+    const res = await request(app)
+      .patch("/api/job-applications/123/reject-app")
+      .send({ applicationStatus: "rejected" });
+    expect(res.status).toBe(200);
+  });
+
+  it("Should return 404 if application is not found", async () => {
+    mockUpdateAppStatus.mockResolvedValue(null);
+    const res = await request(app)
+      .patch("/api/job-applications/123/reject-app")
+      .send({ applicationStatus: "rejected" });
+    expect(res.status).toBe(404);
+  });
+
+  it("Should return 500 if server error occurs", async () => {
+    mockUpdateAppStatus.mockRejectedValue("Unknown server error");
+    const res = await request(app).patch(
+      "/api/job-applications/123/reject-app"
+    );
+    expect(res.status).toBe(500);
   });
 });

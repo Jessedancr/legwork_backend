@@ -7,9 +7,11 @@ import {
 import { checkSchema } from "express-validator";
 import { jobApplicationValidationSchema } from "../../../core/middlewares/jobApplicationValidation.schema";
 import {
+  acceptApplication,
   applyForJob,
   getApplicationsForDancer,
   getApplicationsForJob,
+  rejectApplication,
 } from "../controllers/jobApplication.controllers";
 
 export const jobApplicationRouter: Router = Router();
@@ -34,4 +36,18 @@ jobApplicationRouter.get(
   authMiddleware,
   dancerOnly,
   getApplicationsForDancer
+);
+
+jobApplicationRouter.patch(
+  "/:appId/accept-app",
+  authMiddleware,
+  clientOnly,
+  acceptApplication
+);
+
+jobApplicationRouter.patch(
+  "/:appId/reject-app",
+  authMiddleware,
+  clientOnly,
+  rejectApplication
 );

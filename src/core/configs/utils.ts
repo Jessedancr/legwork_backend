@@ -393,3 +393,21 @@ export const fetchApplicationsByDancerId = async (dancerId: string) => {
     return null;
   }
 };
+
+export const updateApplicationStatus = async (
+  applicationId: string,
+  status: string
+) => {
+  try {
+    const updatedApp = await jobApplicationModel.findByIdAndUpdate(
+      applicationId,
+      { $set: { applicationStatus: status } },
+      { new: true, runValidators: true }
+    );
+
+    return updatedApp;
+  } catch (error) {
+    console.log("Failed to update application status: ", error);
+    return null;
+  }
+};
