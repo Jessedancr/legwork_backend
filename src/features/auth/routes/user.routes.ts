@@ -7,8 +7,6 @@ import {
   uploadProfileImage,
 } from "../controllers/user.controllers";
 import { authMiddleware } from "../../../core/middlewares/passportStrats/authjwt.middleware";
-import { userIdValidationSchema } from "../../../core/middlewares/userIdValidator";
-import { checkSchema } from "express-validator";
 import upload from "../../../core/middlewares/upload.middleware";
 const userRouter: Router = Router();
 
@@ -21,7 +19,6 @@ userRouter.get("/:userId/get-device-token", getDeviceToken);
 userRouter.patch(
   "/:userId/update-user-details",
   authMiddleware,
-  checkSchema(userIdValidationSchema),
   updateUserDetails
 );
 
