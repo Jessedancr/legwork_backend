@@ -4,7 +4,6 @@ import {
   findUserAndUpdate,
   findUserById,
 } from "../../../core/configs/utils";
-import { matchedData, validationResult } from "express-validator";
 
 export function getUsers(req: Request, res: Response) {}
 
@@ -34,18 +33,11 @@ export async function getUserDetails(req: Request, res: Response) {
 export function getDeviceToken(req: Request, res: Response) {}
 
 export async function updateUserDetails(req: Request, res: Response) {
-  const result = validationResult(req);
-
-  // * If there are errors while validating the user's input
-  if (!result.isEmpty())
-    return res.status(400).send({ errors: result.array() });
-
-  // * Validated data
-  const data = matchedData(req);
-  const { userId } = data;
-
-  // * Update details of the current user
+  const { userId } = req.params;
   const updatedDetails = req.body;
+  if (!userId || userId === null || userId === "" || userId === undefined) {
+    return res.status(404).json({ message: "Invalid user ID" });
+  }
 
   try {
     // * find user by ID
@@ -59,7 +51,7 @@ export async function updateUserDetails(req: Request, res: Response) {
     return res.status(200).json({ message: "User details updated", result });
   } catch (error) {
     console.log("Unexpected error while updating user details: ", error);
-    res
+    return res
       .status(500)
       .json({ message: "Internal server error while updating user details" });
   }
