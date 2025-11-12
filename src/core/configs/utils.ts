@@ -16,6 +16,14 @@ import { jobModel } from "../../features/jobPosting/models/job.schema";
 import { JobApplicationInterface } from "../../features/jobApplication/models/jobApplication.interface";
 import { jobApplicationModel } from "../../features/jobApplication/models/jobApplication.schema";
 import { ObjectId } from "mongoose";
+import { initializeApp } from "firebase-admin/app";
+import { Message } from "firebase-admin/messaging";
+import admin, { credential } from "firebase-admin";
+var serviceAccount = require("../../../assets/push-notif-key.json");
+
+initializeApp({
+  credential: credential.cert(serviceAccount),
+});
 
 // * HASH PASSWORD
 export const hashPassword = async (password: string) => {
@@ -409,5 +417,29 @@ export const updateApplicationStatus = async (
   } catch (error) {
     console.log("Failed to update application status: ", error);
     return null;
+  }
+};
+
+export const sendNotificationToDevice = async (
+  deviceToken: string,
+  title: string,
+  body: string
+) => {
+  const message: Message = {
+    notification: {
+      title,
+      body,
+    },
+    token: deviceToken,
+    android: { priority: "high" },
+  };
+
+  try {
+    const res = await admin.messaging().send(message);
+    console.log("Notification sent successfully: ", res);
+    return res;
+  } catch (error) {
+    console.error("Error sending notification: ", error);
+    throw error;
   }
 };
