@@ -423,7 +423,8 @@ export const updateApplicationStatus = async (
 export const sendNotificationToDevice = async (
   deviceToken: string,
   title: string,
-  body: string
+  body: string,
+  channelId?: string
 ) => {
   const message: Message = {
     notification: {
@@ -431,7 +432,11 @@ export const sendNotificationToDevice = async (
       body,
     },
     token: deviceToken,
-    android: { priority: "high" },
+    data: { channelId: channelId || "system_channel" },
+    android: {
+      priority: "high",
+      notification: { channelId: channelId || "system_channel" },
+    },
   };
 
   try {
