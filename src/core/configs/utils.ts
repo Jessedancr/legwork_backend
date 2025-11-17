@@ -16,13 +16,12 @@ import { jobModel } from "../../features/jobPosting/models/job.schema";
 import { JobApplicationInterface } from "../../features/jobApplication/models/jobApplication.interface";
 import { jobApplicationModel } from "../../features/jobApplication/models/jobApplication.schema";
 import { ObjectId } from "mongoose";
-import { initializeApp } from "firebase-admin/app";
-import { Message } from "firebase-admin/messaging";
-import admin, { credential } from "firebase-admin";
+import { initializeApp, cert } from "firebase-admin/app";
+import { Message, getMessaging } from "firebase-admin/messaging";
 var serviceAccount = require("../../../assets/push-notif-key.json");
 
-initializeApp({
-  credential: credential.cert(serviceAccount),
+const app = initializeApp({
+  credential: cert(serviceAccount),
 });
 
 // * HASH PASSWORD
@@ -440,7 +439,7 @@ export const sendNotificationToDevice = async (
   };
 
   try {
-    const res = await admin.messaging().send(message);
+    const res = await getMessaging(app).send(message);
     console.log("Notification sent successfully: ", res);
     return res;
   } catch (error) {
