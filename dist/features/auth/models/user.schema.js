@@ -61,8 +61,8 @@ const dancerSchema = new mongoose_1.Schema({
 // * Client schema
 const clientSchema = new mongoose_1.Schema({
     ...baseUserFields,
-    danceStylePrefs: { type: [mongoose_1.Schema.Types.Array], default: [] },
-    jobOfferings: { type: [mongoose_1.Schema.Types.Array], default: [] },
+    danceStylePrefs: { type: [String], default: [] },
+    jobOfferings: { type: [String], default: [] },
     organisationName: { type: String, default: "" },
     hiringHistory: { type: mongoose_1.Schema.Types.Map, default: {} },
 }, { timestamps: true });

@@ -3,12 +3,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uploadToCloudinary = exports.findUserAndUpdate = exports.findUserById = exports.findUserByUsernameOrEmail = exports.verifyRefreshToken = exports.verifyAccessToken = exports.generateRefreshToken = exports.generateAccessToken = exports.refreshTokenMaxAge = exports.accessTokenMaxAge = exports.saveClient = exports.saveDancer = exports.checkUserExists = exports.comparePasswords = exports.hashPassword = void 0;
+exports.sendNotificationToDevice = exports.updateApplicationStatus = exports.fetchApplicationsByDancerId = exports.fetchApplicationsByJobId = exports.saveJobApplication = exports.updateJobStatus = exports.fetchJobsByClientId = exports.fetchAllJobs = exports.saveJob = exports.uploadToCloudinary = exports.findUserAndUpdate = exports.findUserById = exports.findUserByUsernameOrEmail = exports.verifyRefreshToken = exports.verifyAccessToken = exports.generateRefreshToken = exports.generateAccessToken = exports.refreshTokenMaxAge = exports.accessTokenMaxAge = exports.saveClient = exports.saveDancer = exports.checkUserExists = exports.comparePasswords = exports.hashPassword = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const user_schema_1 = require("../../features/auth/models/user.schema");
 const stream_1 = require("stream");
 const cloudinary_1 = __importDefault(require("../../core/configs/cloudinary"));
+const job_schema_1 = require("../../features/jobPosting/models/job.schema");
+const jobApplication_schema_1 = require("../../features/jobApplication/models/jobApplication.schema");
+const app_1 = require("firebase-admin/app");
+const messaging_1 = require("firebase-admin/messaging");
+var serviceAccount = require("../../../assets/push-notif-key.json");
+const app = (0, app_1.initializeApp)({
+    credential: (0, app_1.cert)(serviceAccount),
+});
 // * HASH PASSWORD
 const hashPassword = async (password) => {
     const saltRounds = 10;
@@ -28,31 +36,40 @@ exports.comparePasswords = comparePasswords;
  * * Else return false
  */
 const checkUserExists = async (username, email, phoneNumber) => {
-    // Check username
-    const [dancerUsername, clientUsername] = await Promise.all([
-        user_schema_1.dancerModel.findOne({ username }),
-        user_schema_1.clientModel.findOne({ username }),
-    ]);
-    if (dancerUsername || clientUsername) {
-        return { exists: true, field: "username" };
+    try {
+        // Check username
+        const [dancerUsername, clientUsername] = await Promise.all([
+            user_schema_1.dancerModel.findOne({ username }),
+            user_schema_1.clientModel.findOne({ username }),
+        ]);
+        if (dancerUsername || clientUsername) {
+            return { exists: true, field: "username" };
+        }
+        // Check email
+        const [dancerEmail, clientEmail] = await Promise.all([
+            user_schema_1.dancerModel.findOne({ email }),
+            user_schema_1.clientModel.findOne({ email }),
+        ]);
+        if (dancerEmail || clientEmail) {
+            return { exists: true, field: "email" };
+        }
+        // Check phone number
+        const [dancerPhone, clientPhone] = await Promise.all([
+            user_schema_1.dancerModel.findOne({ phoneNumber }),
+            user_schema_1.clientModel.findOne({ phoneNumber }),
+        ]);
+        if (dancerPhone || clientPhone) {
+            return { exists: true, field: "phoneNumber" };
+        }
+        return { exists: false };
     }
-    // Check email
-    const [dancerEmail, clientEmail] = await Promise.all([
-        user_schema_1.dancerModel.findOne({ email }),
-        user_schema_1.clientModel.findOne({ email }),
-    ]);
-    if (dancerEmail || clientEmail) {
-        return { exists: true, field: "email" };
+    catch (error) {
+        console.error("Unknown error in checkUserExists func", error);
+        return {
+            exists: false,
+            error: "Unexpected error while checking if user exists",
+        };
     }
-    // Check phone number
-    const [dancerPhone, clientPhone] = await Promise.all([
-        user_schema_1.dancerModel.findOne({ phoneNumber }),
-        user_schema_1.clientModel.findOne({ phoneNumber }),
-    ]);
-    if (dancerPhone || clientPhone) {
-        return { exists: true, field: "phoneNumber" };
-    }
-    return { exists: false };
 };
 exports.checkUserExists = checkUserExists;
 // * SAVE DANCER TO DB
@@ -222,3 +239,170 @@ const uploadToCloudinary = (buffer, folder) => {
     }
 };
 exports.uploadToCloudinary = uploadToCloudinary;
+// * SAVE JOB TO DB
+const saveJob = async (jobData) => {
+    const job = new job_schema_1.jobModel(jobData);
+    try {
+        const savedJob = await job.save();
+        return savedJob;
+    }
+    catch (error) {
+        console.log("Error saving job to DB: ", error);
+        throw error;
+    }
+};
+exports.saveJob = saveJob;
+// * FETCH ALL JOBS
+const fetchAllJobs = async () => {
+    try {
+        const jobs = await job_schema_1.jobModel.find({ status: true }).sort({ createdAt: -1 });
+        return jobs;
+    }
+    catch (error) {
+        console.log("Error fetching all jobs: ", error);
+        return null;
+    }
+};
+exports.fetchAllJobs = fetchAllJobs;
+// * FETCH JOBS BY CLIENT ID
+const fetchJobsByClientId = async (clientId) => {
+    try {
+        const jobs = await job_schema_1.jobModel.find({ clientId }).sort({ createdAt: -1 });
+        return jobs;
+    }
+    catch (error) {
+        console.log("Error fetching jobs by client ID: ", error);
+        return null;
+    }
+};
+exports.fetchJobsByClientId = fetchJobsByClientId;
+// * UPDATE JOB STATUS
+const updateJobStatus = async (jobId, jobStatus) => {
+    try {
+        const updatedJobDoc = await job_schema_1.jobModel.findByIdAndUpdate(jobId, { $set: { status: jobStatus } }, {
+            new: true,
+            runValidators: true,
+        });
+        if (!updatedJobDoc) {
+            console.log(`Job with ID ${jobId} not found`);
+            return null;
+        }
+        return updatedJobDoc;
+    }
+    catch (error) {
+        console.log("Error finding and updating job: ", error);
+        return error;
+    }
+};
+exports.updateJobStatus = updateJobStatus;
+const getClientIdFromJob = async (jobId) => {
+    try {
+        const job = await job_schema_1.jobModel.findById(jobId);
+        if (!job) {
+            console.log(`Job with ID ${jobId} not found`);
+            throw new Error("The job you are applying for does not exist");
+        }
+        return job.clientId;
+    }
+    catch (error) {
+        console.log("Error getting client ID from job: ", error);
+        return null;
+    }
+};
+const saveJobApplication = async (jobApplicationData) => {
+    const application = new jobApplication_schema_1.jobApplicationModel(jobApplicationData);
+    try {
+        // Query the collection to ensure a unique application per dancer per job
+        const existingApplication = await jobApplication_schema_1.jobApplicationModel.findOne({
+            dancerId: jobApplicationData.dancerId,
+            jobId: jobApplicationData.jobId,
+        });
+        if (existingApplication) {
+            return { exists: true, application: existingApplication };
+        }
+        const clientId = await getClientIdFromJob(jobApplicationData.jobId);
+        application.clientId = clientId;
+        const savedApplication = await application.save();
+        return { exists: false, application: savedApplication };
+    }
+    catch (error) {
+        console.log("Error saving job application to DB: ", error);
+        throw error;
+    }
+};
+exports.saveJobApplication = saveJobApplication;
+const fetchApplicationsByJobId = async (jobId, clientId) => {
+    try {
+        const apps = await jobApplication_schema_1.jobApplicationModel
+            .find({ jobId: jobId, clientId: clientId })
+            .sort({ createdAt: -1 });
+        return apps;
+    }
+    catch (error) {
+        console.log("Error fetching applications by job ID: ", error);
+        return null;
+    }
+};
+exports.fetchApplicationsByJobId = fetchApplicationsByJobId;
+const fetchJobById = async (id) => {
+    try {
+        const job = await job_schema_1.jobModel.findById(id);
+        return job;
+    }
+    catch (error) {
+        console.log("Error fetching job by ID: ", error);
+        return null;
+    }
+};
+const fetchApplicationsByDancerId = async (dancerId) => {
+    try {
+        const apps = await jobApplication_schema_1.jobApplicationModel
+            .find({ dancerId })
+            .sort({ createdAt: -1 });
+        const appsWithJobs = await Promise.all(apps.map(async (app) => {
+            const job = await fetchJobById(app.jobId);
+            return { application: app, job };
+        }));
+        return appsWithJobs;
+    }
+    catch (error) {
+        console.log("Error fetching applications be Dancer ID: ", error);
+        return null;
+    }
+};
+exports.fetchApplicationsByDancerId = fetchApplicationsByDancerId;
+const updateApplicationStatus = async (applicationId, status) => {
+    try {
+        const updatedApp = await jobApplication_schema_1.jobApplicationModel.findByIdAndUpdate(applicationId, { $set: { applicationStatus: status } }, { new: true, runValidators: true });
+        return updatedApp;
+    }
+    catch (error) {
+        console.log("Failed to update application status: ", error);
+        return null;
+    }
+};
+exports.updateApplicationStatus = updateApplicationStatus;
+const sendNotificationToDevice = async (deviceToken, title, body, channelId) => {
+    const message = {
+        notification: {
+            title,
+            body,
+        },
+        token: deviceToken,
+        data: { channelId: channelId || "system_channel" },
+        android: {
+            priority: "high",
+            notification: { channelId: channelId || "system_channel" },
+        },
+    };
+    try {
+        const res = await (0, messaging_1.getMessaging)(app).send(message);
+        console.log("Notification sent successfully: ", res);
+        return res;
+    }
+    catch (error) {
+        console.error("Error sending notification: ", error);
+        throw error;
+    }
+};
+exports.sendNotificationToDevice = sendNotificationToDevice;

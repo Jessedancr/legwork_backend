@@ -74,7 +74,9 @@ exports.userSignUpValidationSchema = {
     },
     // * Organisation name validation
     organisationName: {
-        optional: true,
+        optional: {
+            options: { checkFalsy: true },
+        },
         isLength: {
             options: { min: 3, max: 25 },
             errorMessage: "Organisation name must be between 3 and 25 characters",

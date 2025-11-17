@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const authjwt_middleware_1 = require("../../../core/middlewares/passportStrats/authjwt.middleware");
+const job_controllers_1 = require("../controllers/job.controllers");
+const postJobValidationSchema_1 = require("../../../core/middlewares/postJobValidationSchema");
+const express_validator_1 = require("express-validator");
+const jobRouter = (0, express_1.Router)();
+jobRouter.post("/create-job", authjwt_middleware_1.authMiddleware, authjwt_middleware_1.clientOnly, (0, express_validator_1.checkSchema)(postJobValidationSchema_1.postJobValidationSchema), job_controllers_1.createJob);
+jobRouter.get("/fetch-jobs", authjwt_middleware_1.authMiddleware, job_controllers_1.fetchJobs);
+jobRouter.patch("/:jobId/change-status", authjwt_middleware_1.authMiddleware, authjwt_middleware_1.clientOnly, job_controllers_1.changeStatus);
+exports.default = jobRouter;

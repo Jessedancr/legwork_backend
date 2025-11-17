@@ -3,12 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.refreshAuthMiddleware = exports.authMiddleware = exports.passportRefreshStrat = exports.passprtJWTStrat = void 0;
+exports.dancerOnly = exports.clientOnly = exports.refreshAuthMiddleware = exports.authMiddleware = exports.passportRefreshStrat = exports.passportJWTStrat = void 0;
 const passport_1 = __importDefault(require("passport"));
 const passport_jwt_1 = require("passport-jwt");
 const passport_jwt_2 = require("passport-jwt");
 const user_schema_1 = require("../../../features/auth/models/user.schema");
-const passprtJWTStrat = () => {
+const userTypeEnum_1 = __importDefault(require("../../enums/userTypeEnum"));
+const passportJWTStrat = () => {
     return new passport_jwt_1.Strategy({
         jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
         secretOrKey: process.env.JWT_SECRET,
@@ -34,7 +35,7 @@ const passprtJWTStrat = () => {
         }
     });
 };
-exports.passprtJWTStrat = passprtJWTStrat;
+exports.passportJWTStrat = passportJWTStrat;
 const passportRefreshStrat = () => {
     return new passport_jwt_2.Strategy({
         jwtFromRequest: passport_jwt_1.ExtractJwt.fromBodyField("refreshToken"),
@@ -69,6 +70,30 @@ exports.authMiddleware = passport_1.default.authenticate("jwt", {
     session: false,
 });
 // * Middleware to authenticate refresh token
-exports.refreshAuthMiddleware = passport_1.default.authenticate("jwt", {
+exports.refreshAuthMiddleware = passport_1.default.authenticate("refresh", {
     session: false,
 });
+const clientOnly = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ message: "Unauthorised access" });
+    }
+    if (req.user.userType !== userTypeEnum_1.default.Client) {
+        return res
+            .status(403)
+            .json({ message: "Forbidden, only clients can access this" });
+    }
+    next();
+};
+exports.clientOnly = clientOnly;
+const dancerOnly = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ message: "Unauthorised access" });
+    }
+    if (req.user.userType !== userTypeEnum_1.default.Dancer) {
+        return res
+            .status(403)
+            .json({ message: "Forbidden, only dancers can access this" });
+    }
+    next();
+};
+exports.dancerOnly = dancerOnly;

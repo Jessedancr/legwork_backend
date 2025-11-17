@@ -6,15 +6,18 @@ exports.getDeviceToken = getDeviceToken;
 exports.updateUserDetails = updateUserDetails;
 exports.uploadProfileImage = uploadProfileImage;
 const utils_1 = require("../../../core/configs/utils");
-const express_validator_1 = require("express-validator");
 function getUsers(req, res) { }
 async function getUserDetails(req, res) {
     const userId = req.params.userId;
+    res.setHeader("Content-Type", "application/json");
     try {
+        if (!userId || userId === null || userId === "" || userId === undefined) {
+            return res.status(404).json({ message: "Invalid user ID" });
+        }
         const user = await (0, utils_1.findUserById)(userId);
         if (!user) {
             console.log(`User not found with the provided ID: ${userId}`);
-            res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: "User not found" });
         }
         res.status(200).json({ message: "User's details gotten", user });
     }
@@ -25,15 +28,11 @@ async function getUserDetails(req, res) {
 }
 function getDeviceToken(req, res) { }
 async function updateUserDetails(req, res) {
-    const result = (0, express_validator_1.validationResult)(req);
-    // * If there are errors while validating the user's input
-    if (!result.isEmpty())
-        return res.status(400).send({ errors: result.array() });
-    // * Validated data
-    const data = (0, express_validator_1.matchedData)(req);
-    const { userId } = data;
-    // * Update details of the current user
+    const { userId } = req.params;
     const updatedDetails = req.body;
+    if (!userId || userId === null || userId === "" || userId === undefined) {
+        return res.status(404).json({ message: "Invalid user ID" });
+    }
     try {
         // * find user by ID
         const result = await (0, utils_1.findUserAndUpdate)(userId, updatedDetails);
@@ -47,7 +46,7 @@ async function updateUserDetails(req, res) {
     }
     catch (error) {
         console.log("Unexpected error while updating user details: ", error);
-        res
+        return res
             .status(500)
             .json({ message: "Internal server error while updating user details" });
     }

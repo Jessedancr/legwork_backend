@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.jobApplicationRouter = void 0;
+const express_1 = require("express");
+const authjwt_middleware_1 = require("../../../core/middlewares/passportStrats/authjwt.middleware");
+const express_validator_1 = require("express-validator");
+const jobApplicationValidation_schema_1 = require("../../../core/middlewares/jobApplicationValidation.schema");
+const jobApplication_controllers_1 = require("../controllers/jobApplication.controllers");
+exports.jobApplicationRouter = (0, express_1.Router)();
+exports.jobApplicationRouter.post("/:jobId/apply-for-job", authjwt_middleware_1.authMiddleware, authjwt_middleware_1.dancerOnly, (0, express_validator_1.checkSchema)(jobApplicationValidation_schema_1.jobApplicationValidationSchema), jobApplication_controllers_1.applyForJob);
+exports.jobApplicationRouter.get("/:jobId/applications", authjwt_middleware_1.authMiddleware, authjwt_middleware_1.clientOnly, jobApplication_controllers_1.getApplicationsForJob);
+exports.jobApplicationRouter.get("/get-dancer-applications", authjwt_middleware_1.authMiddleware, authjwt_middleware_1.dancerOnly, jobApplication_controllers_1.getApplicationsForDancer);
+exports.jobApplicationRouter.patch("/:appId/accept-app", authjwt_middleware_1.authMiddleware, authjwt_middleware_1.clientOnly, jobApplication_controllers_1.acceptApplication);
+exports.jobApplicationRouter.patch("/:appId/reject-app", authjwt_middleware_1.authMiddleware, authjwt_middleware_1.clientOnly, jobApplication_controllers_1.rejectApplication);
