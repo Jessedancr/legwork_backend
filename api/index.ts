@@ -1,8 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config();
-import createApp from "../src/app.ts";
+import createApp from "../src/app";
 
-import connectMongo from "../src/core/configs/connectMongo.ts";
+import connectMongo from "../src/core/configs/connectMongo";
 
 // Initialize the database connection
 const db = connectMongo();
