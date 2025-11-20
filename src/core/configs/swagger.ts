@@ -1,4 +1,5 @@
 import { Router } from "express";
+import path from "path";
 import SwaggerUi from "swagger-ui-express";
 import swaggerJSDoc from "swagger-jsdoc";
 const swaggerRouter: Router = Router();
@@ -14,6 +15,9 @@ const options: swaggerJSDoc.Options = {
     tags: [
       { name: "auth", description: "Authentication routes" },
       { name: "users", description: "User management routes" },
+      { name: "jobs", description: "Job posting routes" },
+      { name: "job-applications", description: "Job application routes" },
+      { name: "notif", description: "Notification routes" },
     ],
     servers: [
       {
@@ -40,9 +44,10 @@ const options: swaggerJSDoc.Options = {
       },
     },
   },
-  apis: ["./src/core/swaggerDocs/*.ts"], // Path to the API documentation files
+  apis: [path.join(process.cwd(), "src/core/swaggerDocs/*.ts")], // Absolute path to the API documentation files
 };
 
 const swaggerSpec = swaggerJSDoc(options);
+console.log("Swagger paths:", Object.keys(((swaggerSpec as any).paths) || {}));
 swaggerRouter.use("/", SwaggerUi.serve, SwaggerUi.setup(swaggerSpec));
 export default swaggerRouter
