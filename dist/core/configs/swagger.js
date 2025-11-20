@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
+const path_1 = __importDefault(require("path"));
 const swaggerRouter = (0, express_1.Router)();
 const options = {
     definition: {
@@ -25,7 +26,7 @@ const options = {
                 description: "Development server",
             },
             {
-                url: 'https://legwork-backend.onrender.com/',
+                url: 'https://legwork-backend.vercel.app/',
                 description: "Production server",
             }
         ],
@@ -44,7 +45,9 @@ const options = {
             },
         },
     },
-    apis: ["./src/core/swaggerDocs/*.ts"], // Path to the API documentation files
+    apis: [
+        path_1.default.join(__dirname, "../swaggerDocs/*.js")
+    ], // Path to the API documentation files
 };
 const swaggerSpec = (0, swagger_jsdoc_1.default)(options);
 swaggerRouter.use("/", swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swaggerSpec));
