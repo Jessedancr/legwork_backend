@@ -18,6 +18,16 @@ import { jobApplicationModel } from "../../features/jobApplication/models/jobApp
 import { ObjectId } from "mongoose";
 import { initializeApp, cert } from "firebase-admin/app";
 import { Message, getMessaging } from "firebase-admin/messaging";
+import {
+  ChatRoomInterface,
+  SenderInterface,
+  MessageInterface,
+} from "../../features/chat/models/chat.interface";
+import MessageStatus from "../enums/messageStatusEnum";
+import {
+  chatRoomModel,
+  messageModel,
+} from "../../features/chat/models/chat.schema";
 // var serviceAccount = require("../../../assets/push-notif-key.json");
 
 const serviceAccount = {
@@ -457,6 +467,69 @@ export const sendNotificationToDevice = async (
     return res;
   } catch (error) {
     console.error("Error sending notification: ", error);
+    throw error;
+  }
+};
+
+export const updateChatRoomMessage = async (
+  chatRoomId: string,
+  sender: SenderInterface,
+  content: string,
+  status: MessageStatus
+): Promise<MessageInterface> => {
+  const newMessage = new messageModel({
+    chatRoom: chatRoomId,
+    sender: {
+      id: sender.id,
+      userType: sender.userType,
+    },
+    content: content,
+    status: status,
+  });
+
+  await newMessage.save();
+
+  // Update chatroom's last message
+  await chatRoomModel.findByIdAndUpdate(chatRoomId, {
+    lastMessage: content,
+    lastMessageTime: new Date(),
+  });
+  return newMessage;
+};
+
+export const makeChatRoom = async (
+  roomId: string,
+  dancerId: string,
+  clientId: string
+): Promise<ChatRoomInterface> => {
+  try {
+    let chatRoom = await chatRoomModel.findOne({ roomId });
+
+    if (!chatRoom) {
+      // Create new chat room
+      chatRoom = new chatRoomModel({
+        roomId,
+        dancer: dancerId,
+        client: clientId,
+      });
+      await chatRoom.save();
+    }
+    return chatRoom;
+  } catch (error) {
+    console.log("Error finding chat room: ", error);
+    throw error;
+  }
+};
+
+export const findChatRoom = async (chatRoomId: string) => {
+  try {
+    const chatRoom = await chatRoomModel.findById(chatRoomId);
+    if (!chatRoom) {
+      throw Error("Chat room not found");
+    }
+    return chatRoom;
+  } catch (error) {
+    console.log("Error finding chat room: ", error);
     throw error;
   }
 };

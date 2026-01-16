@@ -36,10 +36,6 @@ export default function createApp(db: any) {
   app.get("/", (req: Request, res: Response) => {
     res.json({ message: "H O M E P A G E" });
   });
-
-  app.post("/test", (req: Request, res: Response) => {
-    res.status(200).json({ message: "Everything OK" });
-  });
-
+  
   return app;
 }

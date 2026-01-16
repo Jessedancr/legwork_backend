@@ -48,6 +48,6 @@ const options: swaggerJSDoc.Options = {
 };
 
 const swaggerSpec = swaggerJSDoc(options);
-console.log("Swagger paths:", Object.keys(((swaggerSpec as any).paths) || {}));
+// console.log("Swagger paths:", Object.keys(((swaggerSpec as any).paths) || {}));
 swaggerRouter.use("/", SwaggerUi.serve, SwaggerUi.setup(swaggerSpec));
 export default swaggerRouter
