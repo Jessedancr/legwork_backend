@@ -41,8 +41,9 @@ export type loginReqBody = {
 
 export async function signup(
   req: Request<{}, {}, SignupReqBody>,
-  res: Response
+  res: Response,
 ) {
+  console.log("REQUEST BODY: ", req.body);
   // * Extracts the validation errors if any
   const result = validationResult(req);
   console.log("POST auth/signup: Validation result: ", result);
@@ -71,7 +72,7 @@ export async function signup(
     const { exists, field } = await checkUserExists(
       username,
       email,
-      phoneNumber
+      phoneNumber,
     );
 
     // * If user already exists
@@ -224,7 +225,7 @@ export function logout(req: Request, res: Response) {
  */
 export async function refreshTokens(
   req: Request<{}, {}, refreshTokenReqBody>,
-  res: Response
+  res: Response,
 ) {
   try {
     // * Get refresh token from cookies or body

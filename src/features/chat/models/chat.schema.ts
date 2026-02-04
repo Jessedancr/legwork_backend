@@ -23,14 +23,15 @@ const chatRoomSchema = new Schema<ChatRoomInterface>(
     },
     lastMessage: { type: String, default: "" },
     lastMessageTime: { type: Date, default: null },
+    hasUnreadMessages: { type: Schema.Types.Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const senderSchema = new Schema<SenderInterface>(
   {
     id: {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: true,
       index: true,
     },
@@ -40,13 +41,13 @@ const senderSchema = new Schema<SenderInterface>(
       required: true,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const messageSchema = new Schema<MessageInterface>(
   {
-    chatRoom: {
-      type: Schema.Types.ObjectId,
+    roomId: {
+      type: String,
       required: true,
       ref: "ChatRoom",
       index: true,
@@ -67,7 +68,7 @@ const messageSchema = new Schema<MessageInterface>(
       index: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Compound index for efficient querying
@@ -76,10 +77,10 @@ chatRoomSchema.index({ dancer: 1, client: 1 });
 
 export const messageModel = mongoose.model<MessageInterface>(
   "Message",
-  messageSchema
+  messageSchema,
 );
 
 export const chatRoomModel = mongoose.model<ChatRoomInterface>(
   "ChatRoom",
-  chatRoomSchema
+  chatRoomSchema,
 );

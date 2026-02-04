@@ -7,16 +7,17 @@ export interface ChatRoomInterface extends Document {
   client: ObjectId;
   lastMessage?: string;
   lastMessageTime?: Date;
+  hasUnreadMessages: boolean;
 }
 
 export interface SenderInterface {
   // ? Probably change type to ObjectId
-  id: string;
+  id: ObjectId | string;
   userType: "dancer" | "client";
 }
 
 export interface MessageInterface extends Document {
-  chatRoom: ObjectId;
+  roomId: string;
   sender: SenderInterface;
   content: string;
   status: MessageStatus;

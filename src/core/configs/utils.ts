@@ -70,7 +70,7 @@ export const comparePasswords = async (plain: string, hashed: string) =>
 export const checkUserExists = async (
   username: string,
   email: string,
-  phoneNumber: string
+  phoneNumber: string,
 ): Promise<{ exists: boolean; field?: string; error?: string }> => {
   try {
     // Check username
@@ -214,7 +214,7 @@ export const findUserById = async (id: string) => {
 // * FIND USER BY ID AND UPDATE
 export const findUserAndUpdate = async (
   id: string,
-  updateData: Record<string, any>
+  updateData: Record<string, any>,
 ) => {
   try {
     const [updatedDancer, updatedClient] = await Promise.all([
@@ -245,7 +245,7 @@ export const findUserAndUpdate = async (
 // * CLOUDINARY UPLOAD SETUP
 export const uploadToCloudinary = (
   buffer: Buffer,
-  folder: string
+  folder: string,
 ): Promise<UploadApiResponse> => {
   try {
     return new Promise((resolve, reject) => {
@@ -262,11 +262,11 @@ export const uploadToCloudinary = (
           }
           if (!result) {
             return reject(
-              new Error("Cloudinary upload returned undefined result")
+              new Error("Cloudinary upload returned undefined result"),
             );
           }
           resolve(result);
-        }
+        },
       );
       // Pipe the buffer to the Cloudinary upload stream
       Readable.from(buffer).pipe(stream);
@@ -321,7 +321,7 @@ export const updateJobStatus = async (jobId: string, jobStatus: boolean) => {
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
 
     if (!updatedJobDoc) {
@@ -350,7 +350,7 @@ const getClientIdFromJob = async (jobId: ObjectId) => {
 };
 
 export const saveJobApplication = async (
-  jobApplicationData: JobApplicationInterface
+  jobApplicationData: JobApplicationInterface,
 ): Promise<{
   exists: boolean;
   application: JobApplicationInterface;
@@ -381,7 +381,7 @@ export const saveJobApplication = async (
 
 export const fetchApplicationsByJobId = async (
   jobId: string,
-  clientId: string
+  clientId: string,
 ) => {
   try {
     const apps = await jobApplicationModel
@@ -414,7 +414,7 @@ export const fetchApplicationsByDancerId = async (dancerId: string) => {
       apps.map(async (app) => {
         const job = await fetchJobById(app.jobId);
         return { application: app, job };
-      })
+      }),
     );
 
     return appsWithJobs;
@@ -426,13 +426,13 @@ export const fetchApplicationsByDancerId = async (dancerId: string) => {
 
 export const updateApplicationStatus = async (
   applicationId: string,
-  status: string
+  status: string,
 ) => {
   try {
     const updatedApp = await jobApplicationModel.findByIdAndUpdate(
       applicationId,
       { $set: { applicationStatus: status } },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     return updatedApp;
@@ -446,7 +446,7 @@ export const sendNotificationToDevice = async (
   deviceToken: string,
   title: string,
   body: string,
-  channelId?: string
+  channelId?: string,
 ) => {
   const message: Message = {
     notification: {
@@ -472,38 +472,43 @@ export const sendNotificationToDevice = async (
 };
 
 export const updateChatRoomMessage = async (
-  chatRoomId: string,
+  senderId: string,
+  receiverId: string,
   sender: SenderInterface,
   content: string,
-  status: MessageStatus
+  status: MessageStatus,
 ): Promise<MessageInterface> => {
+  const roomId = `${senderId}_${receiverId}`;
+
   const newMessage = new messageModel({
-    chatRoom: chatRoomId,
+    roomId,
     sender: {
       id: sender.id,
       userType: sender.userType,
     },
-    content: content,
-    status: status,
+    content,
+    status,
   });
 
   await newMessage.save();
 
-  // Update chatroom's last message
-  await chatRoomModel.findByIdAndUpdate(chatRoomId, {
-    lastMessage: content,
-    lastMessageTime: new Date(),
-  });
+  await chatRoomModel.findOneAndUpdate(
+    { roomId },
+    { $set: { lastMessage: content, lastMessageTime: new Date() } },
+    { new: true, upsert: true },
+  );
   return newMessage;
 };
 
 export const makeChatRoom = async (
   roomId: string,
   dancerId: string,
-  clientId: string
+  clientId: string,
 ): Promise<ChatRoomInterface> => {
   try {
-    let chatRoom = await chatRoomModel.findOne({ roomId });
+    let chatRoom = await chatRoomModel
+      .findOne({ roomId })
+      .populate(["dancer", "client"]);
 
     if (!chatRoom) {
       // Create new chat room
@@ -513,6 +518,8 @@ export const makeChatRoom = async (
         client: clientId,
       });
       await chatRoom.save();
+
+      await chatRoom.populate(["dancer", "client"]);
     }
     return chatRoom;
   } catch (error) {
@@ -521,9 +528,9 @@ export const makeChatRoom = async (
   }
 };
 
-export const findChatRoom = async (chatRoomId: string) => {
+export const findChatRoom = async (roomId: string) => {
   try {
-    const chatRoom = await chatRoomModel.findById(chatRoomId);
+    const chatRoom = await chatRoomModel.findOne({ roomId });
     if (!chatRoom) {
       throw Error("Chat room not found");
     }
